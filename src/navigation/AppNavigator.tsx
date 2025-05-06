@@ -8,6 +8,7 @@ import EmployeeLoginScreen from '../screens/EmployeeLoginScreen'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import ProductTrackingScreen from '../screens/ProductTrackingScreen'
 import DepartmentStatsScreen from '../screens/DepartmentStatsScreen'
+import DetailScreen from '../screens/DetailScreen'
 
 // Define the stack navigator param list
 export type RootStackParamList = {
@@ -16,7 +17,8 @@ export type RootStackParamList = {
   EmployeeLogin: undefined;
   Main: undefined;
   ProductTracking: undefined;
-  DepartmentStats: undefined
+  DepartmentStats: undefined;
+  DetailScreen: undefined
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
@@ -40,6 +42,7 @@ const AppNavigator = () => {
           <Stack.Screen name="Main" component={TabNavigator} />
           <Stack.Screen name="ProductTracking" component={ProductTrackingScreen} />
           <Stack.Screen name="DepartmentStats" component={DepartmentStatsScreen} />
+          <Stack.Screen name="DetailScreen" component={DetailScreen} />
         </>
       ) : (
         <>
