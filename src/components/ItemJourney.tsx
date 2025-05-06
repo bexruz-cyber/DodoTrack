@@ -1,5 +1,6 @@
 import type React from "react"
 import { View, Text, StyleSheet } from "react-native"
+import { Check, Circle, Clock } from "react-native-feather"
 
 interface JourneyStep {
   department: string
@@ -21,13 +22,25 @@ const ItemJourney: React.FC<ItemJourneyProps> = ({ steps }) => {
             <View style={styles.stepIconContainer}>
               <View
                 style={[
-                  styles.stepIcon,
-                  step.status === "completed" && styles.completedIcon,
-                  step.status === "current" && styles.currentIcon,
-                  step.status === "pending" && styles.pendingIcon,
+                  styles.stepIconWrapper,
+                  step.status === "completed" && styles.completedIconWrapper,
+                  step.status === "current" && styles.currentIconWrapper,
+                  step.status === "pending" && styles.pendingIconWrapper,
                 ]}
-              />
-              {index < steps.length - 1 && <View style={styles.stepLine} />}
+              >
+                {step.status === "completed" && <Check width={14} height={14} color="white" />}
+                {step.status === "current" && <Clock width={14} height={14} color="white" />}
+                {step.status === "pending" && <Circle width={14} height={14} color="#8898aa" />}
+              </View>
+              {index < steps.length - 1 && (
+                <View
+                  style={[
+                    styles.stepLine,
+                    step.status === "completed" && styles.completedLine,
+                    step.status === "current" && styles.currentLine,
+                  ]}
+                />
+              )}
             </View>
             <View style={styles.stepContent}>
               <Text
@@ -41,7 +54,11 @@ const ItemJourney: React.FC<ItemJourneyProps> = ({ steps }) => {
                 {step.department}
               </Text>
               {step.status !== "pending" && <Text style={styles.stepDate}>{step.date}</Text>}
-              {step.status === "current" && <Text style={styles.currentStatus}>Hozirda shu bo'limda</Text>}
+              {step.status === "current" && (
+                <View style={styles.currentStatusBadge}>
+                  <Text style={styles.currentStatusText}>Hozirda shu bo'limda</Text>
+                </View>
+              )}
             </View>
           </View>
         ))}
@@ -52,15 +69,17 @@ const ItemJourney: React.FC<ItemJourneyProps> = ({ steps }) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: "white",
+    backgroundColor: "#f8f9fe",
     borderRadius: 12,
-    marginBottom: 16,
+    padding: 16,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#e6e9f0",
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
+    color: "#32325d",
     marginBottom: 16,
   },
   timeline: {
@@ -68,65 +87,78 @@ const styles = StyleSheet.create({
   },
   stepContainer: {
     flexDirection: "row",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   stepIconContainer: {
     alignItems: "center",
     marginRight: 12,
   },
-  stepIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
+  stepIconWrapper: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 1,
   },
-  completedIcon: {
-    backgroundColor: "#2ecc71",
-    borderColor: "#2ecc71",
+  completedIconWrapper: {
+    backgroundColor: "#2dce89",
   },
-  currentIcon: {
-    backgroundColor: "#3498db",
-    borderColor: "#3498db",
+  currentIconWrapper: {
+    backgroundColor: "#5e72e4",
   },
-  pendingIcon: {
+  pendingIconWrapper: {
     backgroundColor: "white",
-    borderColor: "#bdc3c7",
+    borderWidth: 1,
+    borderColor: "#8898aa",
   },
   stepLine: {
     position: "absolute",
-    top: 20,
+    top: 24,
     width: 2,
     height: 30,
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#e6e9f0",
     zIndex: 0,
+  },
+  completedLine: {
+    backgroundColor: "#2dce89",
+  },
+  currentLine: {
+    backgroundColor: "#5e72e4",
   },
   stepContent: {
     flex: 1,
   },
   stepDepartment: {
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   completedText: {
-    color: "#2ecc71",
+    color: "#2dce89",
   },
   currentText: {
-    color: "#3498db",
+    color: "#5e72e4",
   },
   pendingText: {
-    color: "#95a5a6",
+    color: "#8898aa",
   },
   stepDate: {
     fontSize: 14,
-    color: "#7f8c8d",
+    color: "#8898aa",
     marginTop: 4,
   },
-  currentStatus: {
+  currentStatusBadge: {
+    backgroundColor: "rgba(94, 114, 228, 0.1)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: "flex-start",
+    marginTop: 6,
+  },
+  currentStatusText: {
     fontSize: 12,
-    color: "#3498db",
-    fontWeight: "bold",
-    marginTop: 4,
+    color: "#5e72e4",
+    fontWeight: "600",
   },
 })
 

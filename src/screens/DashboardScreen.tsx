@@ -1,13 +1,21 @@
-"use client"
-
 import { useState } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, RefreshControl } from "react-native"
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  Dimensions, 
+  RefreshControl,
+  Platform
+} from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
 import ItemJourney from "../components/ItemJourney"
 import type { ProductTrackingItem } from "../types"
-import { ChevronRight } from "react-native-feather"
+import { ChevronRight, BarChart2, PieChart, Box, TrendingUp } from "react-native-feather"
+import LinearGradient from "react-native-linear-gradient"
 
 // Mock data for charts
 const departmentData = [
@@ -27,14 +35,7 @@ const statusData = [
   { name: "Yakunlangan", value: 40, color: "#2ecc71" },
 ]
 
-const monthlyData = [
-  { month: "Yan", sent: 45, received: 40 },
-  { month: "Fev", sent: 50, received: 45 },
-  { month: "Mar", sent: 60, received: 55 },
-  { month: "Apr", sent: 70, received: 65 },
-  { month: "May", sent: 80, received: 75 },
-  { month: "Iyn", sent: 90, received: 85 },
-]
+
 
 // Mock data for product tracking with more items
 const productTrackingData: ProductTrackingItem[] = [
@@ -123,7 +124,6 @@ const productTrackingData: ProductTrackingItem[] = [
 ]
 
 const { width } = Dimensions.get("window")
-const barWidth = (width - 64) / monthlyData.length - 10
 
 const DashboardScreen = () => {
   const { user } = useAuth()
@@ -144,100 +144,29 @@ const DashboardScreen = () => {
     }, 1500)
   }
 
-  const renderBarChart = () => {
-    const maxValue = Math.max(...monthlyData.map((item) => Math.max(item.sent, item.received)))
 
-    return (
-      <View style={styles.barChartContainer}>
-        <View style={styles.barChart}>
-          {monthlyData.map((item, index) => (
-            <View key={index} style={styles.barGroup}>
-              <View style={styles.barLabels}>
-                <Text style={styles.barLabel}>{item.month}</Text>
-              </View>
-              <View style={styles.bars}>
-                <View style={styles.barContainer}>
-                  <View
-                    style={[
-                      styles.bar,
-                      styles.sentBar,
-                      {
-                        height: (item.sent / maxValue) * 150,
-                        width: barWidth / 2 - 2,
-                      },
-                    ]}
-                  />
-                </View>
-                <View style={styles.barContainer}>
-                  <View
-                    style={[
-                      styles.bar,
-                      styles.receivedBar,
-                      {
-                        height: (item.received / maxValue) * 150,
-                        width: barWidth / 2 - 2,
-                      },
-                    ]}
-                  />
-                </View>
-              </View>
-            </View>
-          ))}
-        </View>
-        <View style={styles.chartLegend}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: "#3498db" }]} />
-            <Text style={styles.legendText}>Yuborilgan</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: "#2ecc71" }]} />
-            <Text style={styles.legendText}>Qabul qilingan</Text>
-          </View>
-        </View>
-      </View>
-    )
-  }
 
   const renderPieChart = () => {
     const total = statusData.reduce((sum, item) => sum + item.value, 0)
-    let startAngle = 0
 
     return (
       <View style={styles.pieChartContainer}>
         <View style={styles.pieChart}>
-          {statusData.map((item, index) => {
-            const angle = (item.value / total) * 360
-            const endAngle = startAngle + angle
-
-            // This is a simplified representation since React Native doesn't have native pie charts
-            // In a real app, you would use a library like react-native-svg or victory-native
-            const segment = (
+          {statusData.map((item, index) => (
+            <View key={index} style={styles.pieSegmentContainer}>
               <View
-                key={index}
                 style={[
                   styles.pieSegment,
                   {
                     backgroundColor: item.color,
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    margin: 5,
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
                   },
                 ]}
               />
-            )
-
-            startAngle = endAngle
-            return segment
-          })}
-        </View>
-        <View style={styles.chartLegend}>
-          {statusData.map((item, index) => (
-            <View key={index} style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: item.color }]} />
-              <Text style={styles.legendText}>
-                {item.name}: {item.value}%
-              </Text>
+              <Text style={styles.pieSegmentValue}>{item.value}%</Text>
+              <Text style={styles.pieSegmentLabel}>{item.name}</Text>
             </View>
           ))}
         </View>
@@ -263,14 +192,20 @@ const DashboardScreen = () => {
               <Text style={[styles.tableCell, { flex: 2 }]}>{dept.name}</Text>
               <Text style={styles.tableCell}>{dept.sent}</Text>
               <Text style={styles.tableCell}>{dept.received}</Text>
-              <Text style={styles.tableCell}>{dept.sent - dept.received}</Text>
+              <Text style={[styles.tableCell, { color: dept.sent - dept.received > 0 ? '#f5365c' : '#2dce89' }]}>
+                {dept.sent - dept.received}
+              </Text>
             </View>
           ))}
         </View>
 
-        <TouchableOpacity style={styles.viewAllButton} onPress={() => navigation.navigate("DepartmentStats" as never)}>
+        <TouchableOpacity 
+          style={styles.viewAllButton} 
+          onPress={() => navigation.navigate("DepartmentStats" as never)}
+          activeOpacity={0.7}
+        >
           <Text style={styles.viewAllButtonText}>Hammasini ko'rish</Text>
-          <ChevronRight width={20} height={20} color="#3498db" />
+          <ChevronRight width={20} height={20} color="#5e72e4" />
         </TouchableOpacity>
       </View>
     )
@@ -286,7 +221,10 @@ const DashboardScreen = () => {
           <View key={product.id} style={styles.productCard}>
             <View style={styles.productHeader}>
               <Text style={styles.productTitle}>{product.model}</Text>
-              <View style={styles.productBadge}>
+              <View style={[
+                styles.productBadge,
+                { backgroundColor: getBadgeColor(product.currentDepartment) }
+              ]}>
                 <Text style={styles.productBadgeText}>{product.currentDepartment}</Text>
               </View>
             </View>
@@ -299,145 +237,185 @@ const DashboardScreen = () => {
           </View>
         ))}
 
-        <TouchableOpacity style={styles.viewAllButton} onPress={() => navigation.navigate("ProductTracking" as never)}>
+        <TouchableOpacity 
+          style={styles.viewAllButton} 
+          onPress={() => navigation.navigate("ProductTracking" as never)}
+          activeOpacity={0.7}
+        >
           <Text style={styles.viewAllButtonText}>Hammasini ko'rish</Text>
-          <ChevronRight width={20} height={20} color="#3498db" />
+          <ChevronRight width={20} height={20} color="#5e72e4" />
         </TouchableOpacity>
       </View>
     )
   }
 
+  const getBadgeColor = (department: string) => {
+    const colors: {[key: string]: string} = {
+      "Tikuv": "#5e72e4",
+      "Ombor": "#11cdef",
+      "Bichish": "#2dce89",
+      "Qadoqlash": "#fb6340",
+      "Dizayn": "#ffd600",
+      "Nazorat": "#8965e0",
+      "Yuvish": "#f5365c",
+      "Dazmollash": "#172b4d"
+    };
+    
+    return colors[department] || "#5e72e4";
+  }
+
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3498db"]} />}
-    >
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#5e72e4', '#324cdd']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.header}
+      >
         <Text style={styles.title}>Statistika</Text>
         <Text style={styles.subtitle}>{user?.department} bo'limi</Text>
-      </View>
+      </LinearGradient>
 
-      <View style={styles.timeRangeContainer}>
-        <TouchableOpacity
-          style={[styles.timeRangeButton, timeRange === "day" && styles.activeTimeRange]}
-          onPress={() => setTimeRange("day")}
-        >
-          <Text style={[styles.timeRangeText, timeRange === "day" && styles.activeTimeRangeText]}>Kun</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.timeRangeButton, timeRange === "week" && styles.activeTimeRange]}
-          onPress={() => setTimeRange("week")}
-        >
-          <Text style={[styles.timeRangeText, timeRange === "week" && styles.activeTimeRangeText]}>Hafta</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.timeRangeButton, timeRange === "month" && styles.activeTimeRange]}
-          onPress={() => setTimeRange("month")}
-        >
-          <Text style={[styles.timeRangeText, timeRange === "month" && styles.activeTimeRangeText]}>Oy</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.timeRangeButton, timeRange === "year" && styles.activeTimeRange]}
-          onPress={() => setTimeRange("year")}
-        >
-          <Text style={[styles.timeRangeText, timeRange === "year" && styles.activeTimeRangeText]}>Yil</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.summaryContainer}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>245</Text>
-          <Text style={styles.summaryLabel}>Jami yuborilgan</Text>
+      <ScrollView
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            colors={["#5e72e4"]} 
+            tintColor="#5e72e4"
+            progressBackgroundColor="#ffffff"
+          />
+        }
+      >
+        <View style={styles.timeRangeContainer}>
+          <TouchableOpacity
+            style={[styles.timeRangeButton, timeRange === "day" && styles.activeTimeRange]}
+            onPress={() => setTimeRange("day")}
+          >
+            <Text style={[styles.timeRangeText, timeRange === "day" && styles.activeTimeRangeText]}>Kun</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.timeRangeButton, timeRange === "week" && styles.activeTimeRange]}
+            onPress={() => setTimeRange("week")}
+          >
+            <Text style={[styles.timeRangeText, timeRange === "week" && styles.activeTimeRangeText]}>Hafta</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.timeRangeButton, timeRange === "month" && styles.activeTimeRange]}
+            onPress={() => setTimeRange("month")}
+          >
+            <Text style={[styles.timeRangeText, timeRange === "month" && styles.activeTimeRangeText]}>Oy</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.timeRangeButton, timeRange === "year" && styles.activeTimeRange]}
+            onPress={() => setTimeRange("year")}
+          >
+            <Text style={[styles.timeRangeText, timeRange === "year" && styles.activeTimeRangeText]}>Yil</Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>230</Text>
-          <Text style={styles.summaryLabel}>Jami qabul qilingan</Text>
+
+        <View style={styles.summaryContainer}>
+          <View style={styles.summaryCard}>
+            <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(94, 114, 228, 0.1)' }]}>
+              <Box width={24} height={24} color="#5e72e4" />
+            </View>
+            <Text style={styles.summaryValue}>245</Text>
+            <Text style={styles.summaryLabel}>Jami yuborilgan</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(45, 206, 137, 0.1)' }]}>
+              <TrendingUp width={24} height={24} color="#2dce89" />
+            </View>
+            <Text style={[styles.summaryValue, { color: '#2dce89' }]}>230</Text>
+            <Text style={styles.summaryLabel}>Jami qabul qilingan</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(251, 99, 64, 0.1)' }]}>
+              <BarChart2 width={24} height={24} color="#fb6340" />
+            </View>
+            <Text style={[styles.summaryValue, { color: '#fb6340' }]}>15</Text>
+            <Text style={styles.summaryLabel}>Farq</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(17, 205, 239, 0.1)' }]}>
+              <PieChart width={24} height={24} color="#11cdef" />
+            </View>
+            <Text style={[styles.summaryValue, { color: '#11cdef' }]}>94%</Text>
+            <Text style={styles.summaryLabel}>Samaradorlik</Text>
+          </View>
         </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>15</Text>
-          <Text style={styles.summaryLabel}>Farq</Text>
+
+        <View style={styles.chartCard}>
+          <Text style={styles.chartTitle}>Status bo'yicha</Text>
+          {renderPieChart()}
         </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>94%</Text>
-          <Text style={styles.summaryLabel}>Samaradorlik</Text>
+
+        <View style={styles.chartCard}>
+          <Text style={styles.chartTitle}>Bo'limlar bo'yicha</Text>
+          {renderDepartmentStats()}
         </View>
-      </View>
 
-      <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Oylik statistika</Text>
-        {renderBarChart()}
-      </View>
-
-      <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Status bo'yicha</Text>
-        {renderPieChart()}
-      </View>
-
-      <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Bo'limlar bo'yicha</Text>
-        {renderDepartmentStats()}
-      </View>
-
-      <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Tovar haritasi</Text>
-        {renderProductTracking()}
-        <TouchableOpacity style={styles.viewAllButton} onPress={() => navigation.navigate("ProductTracking" as never)}>
-          <Text style={styles.viewAllButtonText}>Hammasini ko'rish</Text>
-          <ChevronRight width={20} height={20} color="#3498db" />
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <View style={styles.chartCard}>
+          <Text style={styles.chartTitle}>Tovar haritasi</Text>
+          {renderProductTracking()}
+        </View>
+        
+        <View style={styles.bottomPadding} />
+      </ScrollView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f8f9fe",
+  },
+  scrollView: {
+    flex: 1,
   },
   header: {
-    backgroundColor: "white",
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
-    color: "#333",
+    color: "white",
   },
   subtitle: {
     fontSize: 16,
-    color: "#666",
+    color: "rgba(255, 255, 255, 0.8)",
     marginTop: 4,
   },
   timeRangeContainer: {
     flexDirection: "row",
     backgroundColor: "white",
     margin: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   timeRangeButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: "center",
   },
   activeTimeRange: {
-    backgroundColor: "#3498db",
+    backgroundColor: "#5e72e4",
   },
   timeRangeText: {
     fontSize: 14,
-    fontWeight: "500",
-    color: "#333",
+    fontWeight: "600",
+    color: "#8898aa",
   },
   activeTimeRangeText: {
     color: "white",
@@ -450,7 +428,7 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     backgroundColor: "white",
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     width: "48%",
     marginBottom: 16,
@@ -461,21 +439,29 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  summaryIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   summaryValue: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#3498db",
-    marginBottom: 8,
+    color: "#5e72e4",
+    marginBottom: 4,
   },
   summaryLabel: {
     fontSize: 14,
-    color: "#666",
+    color: "#8898aa",
     textAlign: "center",
   },
   chartCard: {
     backgroundColor: "white",
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
     margin: 16,
     marginTop: 0,
     shadowColor: "#000",
@@ -487,17 +473,18 @@ const styles = StyleSheet.create({
   chartTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
-    marginBottom: 16,
+    color: "#32325d",
+    marginBottom: 20,
   },
   barChartContainer: {
-    height: 200,
+    height: 220,
   },
   barChart: {
     flexDirection: "row",
     height: 150,
     alignItems: "flex-end",
     justifyContent: "space-between",
+    paddingHorizontal: 10,
   },
   barGroup: {
     alignItems: "center",
@@ -507,10 +494,12 @@ const styles = StyleSheet.create({
   },
   barLabel: {
     fontSize: 12,
-    color: "#666",
+    color: "#8898aa",
+    fontWeight: "500",
   },
   bars: {
     flexDirection: "row",
+    gap: 2,
   },
   barContainer: {
     alignItems: "center",
@@ -521,34 +510,47 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 4,
   },
   sentBar: {
-    backgroundColor: "#3498db",
+    backgroundColor: "#5e72e4",
   },
   receivedBar: {
-    backgroundColor: "#2ecc71",
+    backgroundColor: "#2dce89",
   },
   pieChartContainer: {
     alignItems: "center",
+    paddingVertical: 10,
   },
   pieChart: {
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "space-around",
     alignItems: "center",
-    marginBottom: 16,
+    width: "100%",
+    paddingVertical: 10,
+  },
+  pieSegmentContainer: {
+    alignItems: "center",
   },
   pieSegment: {
-    // In a real app, you would use SVG to create actual pie segments
+    marginBottom: 8,
+  },
+  pieSegmentValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#32325d",
+    marginBottom: 4,
+  },
+  pieSegmentLabel: {
+    fontSize: 12,
+    color: "#8898aa",
   },
   chartLegend: {
     flexDirection: "row",
-    flexWrap: "wrap",
     justifyContent: "center",
-    marginTop: 16,
+    marginTop: 20,
   },
   legendItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 16,
-    marginBottom: 8,
+    marginRight: 20,
   },
   legendColor: {
     width: 12,
@@ -558,104 +560,111 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 12,
-    color: "#666",
+    color: "#8898aa",
   },
   departmentStatsContainer: {
     marginTop: 10,
   },
   tableContainer: {
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#e0e0e0",
+    borderColor: "#e6e9f0",
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#3498db",
+    backgroundColor: "#5e72e4",
     paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
   },
   tableHeaderCell: {
     flex: 1,
     fontWeight: "bold",
     color: "white",
     textAlign: "center",
+    fontSize: 14,
   },
   tableRow: {
     flexDirection: "row",
     paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
   },
   tableRowEven: {
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f8f9fe",
   },
   tableRowOdd: {
     backgroundColor: "white",
   },
   tableCell: {
     flex: 1,
-    color: "#333",
+    color: "#525f7f",
     textAlign: "center",
+    fontSize: 14,
   },
   productTrackingContainer: {
     marginTop: 10,
   },
   productCard: {
-    backgroundColor: "#f9f9f9",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    backgroundColor: "#f8f9fe",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#e0e0e0",
+    borderColor: "#e6e9f0",
   },
   productHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 12,
   },
   productTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
+    color: "#32325d",
   },
   productBadge: {
-    backgroundColor: "#3498db",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12,
   },
   productBadgeText: {
     color: "white",
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   productDetails: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: 12,
+    marginBottom: 16,
+    gap: 8,
   },
   productDetail: {
-    fontSize: 14,
-    color: "#666",
-    marginRight: 12,
-    marginBottom: 4,
+    fontSize: 13,
+    color: "#525f7f",
+    backgroundColor: "rgba(94, 114, 228, 0.1)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
   viewAllButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
-    marginTop: 8,
+    borderTopColor: "#e6e9f0",
+    marginTop: 12,
   },
   viewAllButtonText: {
     fontSize: 16,
-    color: "#3498db",
-    fontWeight: "500",
+    color: "#5e72e4",
+    fontWeight: "600",
     marginRight: 8,
   },
+  bottomPadding: {
+    height: 100,
+  }
 })
 
 export default DashboardScreen

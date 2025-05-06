@@ -1,26 +1,37 @@
-"use client"
-
-import { useState, useCallback } from "react"
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, RefreshControl, TextInput } from "react-native"
-import { Search, Plus } from "react-native-feather"
+import { useState, useCallback, useRef, useMemo } from "react"
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  RefreshControl,
+  TextInput,
+  Platform,
+  StatusBar,
+  ScrollView
+} from "react-native"
+import { Search, Plus, Filter, X } from "react-native-feather"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
-import TransferCard from "../components/TransferCard"
-import FilterBottomSheet from "../components/FilterBottomSheet"
-import AddTransferModal from "../components/AddTransferModal"
-import ReceiveModal from "../components/ReceiveModal"
-import TransferModal from "../components/TransferModal"
 import type { TransferItem, ReceiveItem, JourneyStep } from "../types"
+import TransferCard from "../components/cards/TransferCard"
+import AddTransferModal from "../components/modals/AddTransferModal"
+import ReceiveModal from "../components/modals/ReceiveModal"
+import TransferModal from "../components/modals/TransferModal"
+import ReceiveCard from "../components/cards/ReceiveCard"
+import LinearGradient from "react-native-linear-gradient"
+import BottomSheet, { BottomSheetBackdrop } from "@gorhom/bottom-sheet"
 
 // Mock data with more items
 const mockTransferItems: TransferItem[] = [
   {
     id: "1",
-    fullName: "Alisher Navoiy",
+    fullName: "user",
     sendDate: "2023-05-15",
     sendTime: "10:30",
     senderDepartment: "Tikuv",
-    receiverDepartment: "Ombor",
+    receiverDepartment: "ombor",
     model: "Model A",
     materialType: "Paxta",
     totalCount: 100,
@@ -31,14 +42,14 @@ const mockTransferItems: TransferItem[] = [
     status: "partial",
     journey: [
       { department: "Tikuv", date: "2023-05-15", status: "completed" },
-      { department: "Ombor", date: "2023-05-16", status: "current" },
+      { department: "ombor", date: "2023-05-16", status: "current" },
       { department: "Bichish", date: "", status: "pending" },
       { department: "Qadoqlash", date: "", status: "pending" },
     ],
   },
   {
     id: "2",
-    fullName: "Bobur Mirzo",
+    fullName: "user",
     sendDate: "2023-05-16",
     sendTime: "11:45",
     senderDepartment: "Bichish",
@@ -58,10 +69,10 @@ const mockTransferItems: TransferItem[] = [
   },
   {
     id: "3",
-    fullName: "Ulug'bek Mirzo",
+    fullName: "user",
     sendDate: "2023-05-17",
     sendTime: "09:15",
-    senderDepartment: "Ombor",
+    senderDepartment: "ombor",
     receiverDepartment: "Qadoqlash",
     model: "Model C",
     materialType: "Jun",
@@ -72,13 +83,13 @@ const mockTransferItems: TransferItem[] = [
     additionalNotes: "Ehtiyot qiling",
     status: "partial",
     journey: [
-      { department: "Ombor", date: "2023-05-17", status: "completed" },
+      { department: "ombor", date: "2023-05-17", status: "completed" },
       { department: "Qadoqlash", date: "2023-05-18", status: "current" },
     ],
   },
   {
     id: "4",
-    fullName: "Abdulla Qodiriy",
+    fullName: "user",
     sendDate: "2023-05-18",
     sendTime: "14:20",
     senderDepartment: "Tikuv",
@@ -98,11 +109,11 @@ const mockTransferItems: TransferItem[] = [
   },
   {
     id: "5",
-    fullName: "Zulfiya Isroilova",
+    fullName: "user",
     sendDate: "2023-05-19",
     sendTime: "08:45",
     senderDepartment: "Qadoqlash",
-    receiverDepartment: "Ombor",
+    receiverDepartment: "ombor",
     model: "Model A",
     materialType: "Sintetika",
     totalCount: 80,
@@ -113,12 +124,12 @@ const mockTransferItems: TransferItem[] = [
     status: "completed",
     journey: [
       { department: "Qadoqlash", date: "2023-05-19", status: "completed" },
-      { department: "Ombor", date: "2023-05-20", status: "current" },
+      { department: "ombor", date: "2023-05-20", status: "current" },
     ],
   },
   {
     id: "6",
-    fullName: "Erkin Vohidov",
+    fullName: "user",
     sendDate: "2023-05-20",
     sendTime: "11:30",
     senderDepartment: "Bichish",
@@ -141,11 +152,11 @@ const mockTransferItems: TransferItem[] = [
 const mockReceiveItems: ReceiveItem[] = [
   {
     id: "1",
-    fullName: "Alisher Navoiy",
+    fullName: "user",
     receiveDate: "2023-05-15",
     receiveTime: "14:30",
     senderDepartment: "Tikuv",
-    receiverDepartment: "Ombor",
+    receiverDepartment: "ombor",
     model: "Model A",
     materialType: "Paxta",
     sentCount: 100,
@@ -156,14 +167,14 @@ const mockReceiveItems: ReceiveItem[] = [
     additionalNotes: "Tez yuborish kerak",
     journey: [
       { department: "Tikuv", date: "2023-05-15", status: "completed" },
-      { department: "Ombor", date: "2023-05-16", status: "current" },
+      { department: "ombor", date: "2023-05-16", status: "current" },
       { department: "Bichish", date: "", status: "pending" },
       { department: "Qadoqlash", date: "", status: "pending" },
     ],
   },
   {
     id: "2",
-    fullName: "Bobur Mirzo",
+    fullName: "user",
     receiveDate: "2023-05-16",
     receiveTime: "15:45",
     senderDepartment: "Bichish",
@@ -183,10 +194,10 @@ const mockReceiveItems: ReceiveItem[] = [
   },
   {
     id: "3",
-    fullName: "Ulug'bek Mirzo",
+    fullName: "user",
     receiveDate: "2023-05-17",
     receiveTime: "13:15",
-    senderDepartment: "Ombor",
+    senderDepartment: "ombor",
     receiverDepartment: "Qadoqlash",
     model: "Model C",
     materialType: "Jun",
@@ -197,13 +208,13 @@ const mockReceiveItems: ReceiveItem[] = [
     size: "XL",
     additionalNotes: "Ehtiyot qiling",
     journey: [
-      { department: "Ombor", date: "2023-05-17", status: "completed" },
+      { department: "ombor", date: "2023-05-17", status: "completed" },
       { department: "Qadoqlash", date: "2023-05-18", status: "current" },
     ],
   },
   {
     id: "4",
-    fullName: "Abdulla Qodiriy",
+    fullName: "user",
     receiveDate: "2023-05-19",
     receiveTime: "09:30",
     senderDepartment: "Tikuv",
@@ -223,11 +234,11 @@ const mockReceiveItems: ReceiveItem[] = [
   },
   {
     id: "5",
-    fullName: "Zulfiya Isroilova",
+    fullName: "user",
     receiveDate: "2023-05-20",
     receiveTime: "10:15",
     senderDepartment: "Qadoqlash",
-    receiverDepartment: "Ombor",
+    receiverDepartment: "ombor",
     model: "Model A",
     materialType: "Sintetika",
     sentCount: 80,
@@ -238,7 +249,7 @@ const mockReceiveItems: ReceiveItem[] = [
     additionalNotes: "",
     journey: [
       { department: "Qadoqlash", date: "2023-05-19", status: "completed" },
-      { department: "Ombor", date: "2023-05-20", status: "current" },
+      { department: "ombor", date: "2023-05-20", status: "current" },
     ],
   },
 ]
@@ -249,27 +260,69 @@ const HomeScreen = () => {
   const [activeTab, setActiveTab] = useState<"send" | "receive">("send")
   const [searchQuery, setSearchQuery] = useState("")
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [transferItems, setTransferItems] = useState<TransferItem[]>(mockTransferItems)
   const [receiveItems, setReceiveItems] = useState<ReceiveItem[]>(mockReceiveItems)
-  const [filters, setFilters] = useState({})
   const [showAddModal, setShowAddModal] = useState(false)
   const [showReceiveModal, setShowReceiveModal] = useState(false)
   const [showTransferModal, setShowTransferModal] = useState(false)
   const [selectedItem, setSelectedItem] = useState<TransferItem | ReceiveItem | null>(null)
 
+  // Bottom Sheet Filter State
+  const bottomSheetRef = useRef<BottomSheet>(null)
+  const [filterValues, setFilterValues] = useState({
+    senderDepartment: "",
+    receiverDepartment: "",
+    model: "",
+    materialType: "",
+    color: "",
+    size: "",
+  })
+
+  // Mock data for filter dropdowns
+  const departments = ["Tikuv", "Ombor", "Bichish", "Qadoqlash"]
+  const models = ["Model A", "Model B", "Model C", "Model D"]
+  const materials = ["Paxta", "Ipak", "Jun", "Sintetika"]
+  const colors = ["Qora", "Oq", "Ko'k", "Qizil", "Yashil"]
+  const sizes = ["XS", "S", "M", "L", "XL", "XXL"]
+
+  // Bottom Sheet snap points
+  const snapPoints = useMemo(() => ["65%"], ["100%"])
+
+  // Bottom Sheet callbacks
+  const handlePresentFilterSheet = useCallback(() => {
+    bottomSheetRef.current?.expand()
+  }, [])
+
+  const handleApplyFilter = useCallback(() => {
+    // Implement filter logic here
+    showToast({
+      type: "success",
+      message: "Filtrlar qo'llanildi",
+    })
+    bottomSheetRef.current?.close()
+  }, [filterValues, showToast])
+
+  const handleResetFilter = useCallback(() => {
+    setFilterValues({
+      senderDepartment: "",
+      receiverDepartment: "",
+      model: "",
+      materialType: "",
+      color: "",
+      size: "",
+    })
+  }, [])
+
+  // Bottom Sheet backdrop component
+  const renderBackdrop = useCallback(
+    (props: any) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />,
+    []
+  )
+
   // Filter items based on user's department
   const filteredTransferItems = transferItems.filter(
     (item) => item.senderDepartment === user?.department || item.fullName === user?.fullName,
   )
-
-  // Filter pending transfer items for receiving
-  const pendingTransferItems = transferItems.filter(
-    (item) => item.receiverDepartment === user?.department && item.receivedCount < item.totalCount,
-  )
-
-  // Filter received items for this department
-  const receivedItems = receiveItems.filter((item) => item.receiverDepartment === user?.department)
 
   const onRefresh = useCallback(() => {
     setIsRefreshing(true)
@@ -281,27 +334,18 @@ const HomeScreen = () => {
         message: "Ma'lumotlar yangilandi",
       })
     }, 1500)
-  }, [])
+  }, [showToast])
 
   const handleSearch = (text: string) => {
     setSearchQuery(text)
     // Implement search logic here
   }
 
-  const handleApplyFilter = (newFilters: any) => {
-    setFilters(newFilters)
-    showToast({
-      type: "success",
-      message: "Filtrlar qo'llanildi",
-    })
-    // Implement filter logic here
-  }
-
   const handleAddTransfer = (newItem: TransferItem) => {
     setTransferItems([newItem, ...transferItems])
   }
 
-  const handleReceiveItem = (item: TransferItem) => {
+  const handleReceiveItem = (item: ReceiveItem) => {
     setSelectedItem(item)
     setShowReceiveModal(true)
   }
@@ -428,54 +472,96 @@ const HomeScreen = () => {
   const renderTransferItem = ({ item }: { item: TransferItem }) => (
     <View>
       <TransferCard item={item} />
-      {/* Uzatish button removed from transfer cards */}
     </View>
   )
 
-  const renderReceiveItem = ({ item }: { item: TransferItem }) => (
+  const renderReceiveItem = ({ item }: { item: ReceiveItem }) => (
     <View>
-      <TransferCard item={item} />
+      <ReceiveCard item={item} />
       <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.receiveButton} onPress={() => handleReceiveItem(item)}>
+        <TouchableOpacity
+          style={styles.receiveButton}
+          onPress={() => handleReceiveItem(item)}
+          activeOpacity={0.7}
+        >
           <Text style={styles.receiveButtonText}>Qabul qilish</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.transferButton} onPress={() => handleTransferItem(item)}>
+        <TouchableOpacity
+          style={styles.transferButton}
+          onPress={() => handleTransferItem(item)}
+          activeOpacity={0.7}
+        >
           <Text style={styles.transferButtonText}>Uzatish</Text>
         </TouchableOpacity>
       </View>
     </View>
   )
 
+  const renderFilterSelectItem = (label: string, value: string, options: string[], field: keyof typeof filterValues) => (
+    <View style={styles.selectContainer}>
+      <Text style={styles.filterLabel}>{label}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionsContainer}>
+        {options.map((option) => (
+          <TouchableOpacity
+            key={option}
+            style={[styles.option, filterValues[field] === option && styles.selectedOption]}
+            onPress={() => setFilterValues({ ...filterValues, [field]: option })}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.optionText, filterValues[field] === option && styles.selectedOptionText]}>{option}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  )
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <StatusBar barStyle="light-content" backgroundColor="#5e72e4" />
+
+      <LinearGradient
+        colors={['#5e72e4', '#324cdd']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
         <Text style={styles.title}>Asosiy sahifa</Text>
         <Text style={styles.subtitle}>{user?.department} bo'limi</Text>
-      </View>
+      </LinearGradient>
 
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Search width={20} height={20} color="#95a5a6" style={styles.searchIcon} />
+          <Search width={20} height={20} color="#8898aa" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Qidirish..."
             value={searchQuery}
             onChangeText={handleSearch}
+            placeholderTextColor="#8898aa"
           />
         </View>
-        <FilterBottomSheet onApplyFilter={handleApplyFilter} />
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={handlePresentFilterSheet}
+          activeOpacity={0.7}
+        >
+          <Filter width={18} height={18} color="white" />
+          <Text style={styles.filterButtonText}>Filter</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === "send" && styles.activeTab]}
           onPress={() => setActiveTab("send")}
+          activeOpacity={0.7}
         >
           <Text style={[styles.tabText, activeTab === "send" && styles.activeTabText]}>Uzatish</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === "receive" && styles.activeTab]}
           onPress={() => setActiveTab("receive")}
+          activeOpacity={0.7}
         >
           <Text style={[styles.tabText, activeTab === "receive" && styles.activeTabText]}>Qabul qilish</Text>
         </TouchableOpacity>
@@ -483,29 +569,92 @@ const HomeScreen = () => {
 
       {activeTab === "send" ? (
         <FlatList
-          data={filteredTransferItems}
+          data={transferItems}
           renderItem={renderTransferItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={["#3498db"]} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              colors={["#5e72e4"]}
+              tintColor="#5e72e4"
+              progressBackgroundColor="#ffffff"
+            />
+          }
           ListEmptyComponent={renderEmptyList}
         />
       ) : (
         <FlatList
-          data={pendingTransferItems}
+          data={receiveItems}
           renderItem={renderReceiveItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={["#3498db"]} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              colors={["#5e72e4"]}
+              tintColor="#5e72e4"
+              progressBackgroundColor="#ffffff"
+            />
+          }
           ListEmptyComponent={renderEmptyList}
         />
       )}
 
-      {user?.department === "Ombor" && (
-        <TouchableOpacity style={styles.addButton} onPress={() => setShowAddModal(true)}>
+      {user?.department === "ombor" && (
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => setShowAddModal(true)}
+          activeOpacity={0.8}
+        >
           <Plus width={24} height={24} color="white" />
         </TouchableOpacity>
       )}
+
+      {/* Filter Bottom Sheet */}
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={-1}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        backdropComponent={renderBackdrop}
+        handleIndicatorStyle={styles.indicator}
+        enableContentPanningGesture={false}
+      >
+        <View style={styles.contentContainer}>
+          <View style={styles.headerContent}>
+            <Text style={styles.filterTitle}>Filtrlash</Text>
+          </View>
+
+          <ScrollView style={styles.scrollView}>
+            {renderFilterSelectItem("Yuboruvchi bo'lim", filterValues.senderDepartment, departments, "senderDepartment")}
+            {renderFilterSelectItem("Qabul qiluvchi bo'lim", filterValues.receiverDepartment, departments, "receiverDepartment")}
+            {renderFilterSelectItem("Model", filterValues.model, models, "model")}
+            {renderFilterSelectItem("Mato turi", filterValues.materialType, materials, "materialType")}
+            {renderFilterSelectItem("Rangi", filterValues.color, colors, "color")}
+            {renderFilterSelectItem("O'lchami", filterValues.size, sizes, "size")}
+          </ScrollView>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.resetButton}
+              onPress={handleResetFilter}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.resetButtonText}>Tozalash</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.applyButton}
+              onPress={handleApplyFilter}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.applyButtonText}>Qo'llash</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </BottomSheet>
 
       <AddTransferModal visible={showAddModal} onClose={() => setShowAddModal(false)} onAdd={handleAddTransfer} />
       <ReceiveModal
@@ -527,80 +676,79 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f8f9fe",
   },
   header: {
-    backgroundColor: "white",
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
-    color: "#333",
+    color: "white",
   },
   subtitle: {
     fontSize: 16,
-    color: "#666",
+    color: "rgba(255, 255, 255, 0.8)",
     marginTop: 4,
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
+    paddingTop: 20,
   },
   searchInputContainer: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "white",
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 12,
-    height: 40,
+    height: 50,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   searchIcon: {
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    height: 40,
+    height: 50,
     fontSize: 16,
-    color: "#333",
+    color: "#32325d",
   },
   tabContainer: {
     flexDirection: "row",
     backgroundColor: "white",
     marginHorizontal: 16,
     marginBottom: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 16,
     alignItems: "center",
   },
   activeTab: {
-    backgroundColor: "#3498db",
+    backgroundColor: "#5e72e4",
   },
   tabText: {
     fontSize: 16,
-    fontWeight: "500",
-    color: "#333",
+    fontWeight: "600",
+    color: "#8898aa",
   },
   activeTabText: {
     color: "white",
@@ -613,10 +761,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 40,
+    backgroundColor: "white",
+    borderRadius: 12,
+    marginTop: 20,
   },
   emptyText: {
     fontSize: 16,
-    color: "#666",
+    color: "#8898aa",
   },
   addButton: {
     position: "absolute",
@@ -625,47 +776,185 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: "#3498db",
+    backgroundColor: "#5e72e4",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowRadius: 6,
+    elevation: 8,
   },
   receiveButton: {
-   flex: 1,
-    backgroundColor: "#3498db",
-    padding: 12,
-    borderRadius: 8,
-    marginLeft: 5,
+    flex: 1,
+    backgroundColor: "#5e72e4",
+    padding: 14,
+    borderRadius: 12,
+    marginRight: 5,
     alignItems: "center",
     marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   receiveButtonText: {
     color: "white",
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   transferButton: {
     flex: 1,
-    backgroundColor: "#2ecc71",
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: "#2dce89",
+    padding: 14,
+    borderRadius: 12,
     marginLeft: 5,
     alignItems: "center",
     marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   transferButtonText: {
     color: "white",
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   buttonRow: {
     flexDirection: "row",
     marginTop: -8,
     marginBottom: 16,
+  },
+  // Filter Bottom Sheet Styles
+  filterButton: {
+    backgroundColor: "#5e72e4",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginLeft: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  filterButtonText: {
+    color: "white",
+    fontWeight: "600",
+    marginLeft: 6,
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  indicator: {
+    backgroundColor: "#5e72e4",
+    width: 40,
+  },
+  filterHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  filterTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "black",
+    paddingLeft: 20
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scrollView: {
+    padding: 20,
+    maxHeight: 400
+  },
+  selectContainer: {
+    marginBottom: 20,
+  },
+  filterLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#525f7f",
+    marginBottom: 10,
+  },
+  optionsContainer: {
+    flexDirection: "row",
+    marginBottom: 8,
+  },
+  option: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: "#f8f9fe",
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "#e6e9f0",
+  },
+  selectedOption: {
+    backgroundColor: "#5e72e4",
+    borderColor: "#5e72e4",
+  },
+  optionText: {
+    color: "#525f7f",
+    fontWeight: "500",
+  },
+  selectedOptionText: {
+    color: "white",
+    fontWeight: "600",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#e6e9f0",
+  },
+  resetButton: {
+    flex: 1,
+    backgroundColor: "#f8f9fe",
+    padding: 14,
+    borderRadius: 12,
+    marginRight: 8,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e6e9f0",
+  },
+  resetButtonText: {
+    color: "#525f7f",
+    fontWeight: "600",
+  },
+  applyButton: {
+    flex: 1,
+    backgroundColor: "#5e72e4",
+    padding: 14,
+    borderRadius: 12,
+    marginLeft: 8,
+    alignItems: "center",
+    shadowColor: "#5e72e4",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  applyButtonText: {
+    color: "white",
+    fontWeight: "600",
   },
 })
 

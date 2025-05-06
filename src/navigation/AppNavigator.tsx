@@ -1,62 +1,45 @@
-"use client"
-import { createNativeStackNavigator } from "@react-navigation/native-stack"
-import { useAuth } from "../context/AuthContext"
-import StartScreen from "../screens/StartScreen"
-import LoginScreen from "../screens/LoginScreen"
-import DetailScreen from "../screens/DetailScreen"
-import ProductTrackingScreen from "../screens/ProductTrackingScreen"
-import DepartmentStatsScreen from "../screens/DepartmentStatsScreen"
-import TabNavigator from "./TabNavigator"
+import React from 'react'
+import { ActivityIndicator, View } from 'react-native'
+import { useAuth } from '../context/AuthContext'
+import TabNavigator from './TabNavigator'
+import StartScreen from '../screens/StartScreen'
+import AdminLoginScreen from '../screens/AdminLoginScreen'
+import EmployeeLoginScreen from '../screens/EmployeeLoginScreen'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
 
-const Stack = createNativeStackNavigator()
+// Define the stack navigator param list
+export type RootStackParamList = {
+  Start: undefined;
+  AdminLogin: undefined;
+  EmployeeLogin: undefined;
+  Main: undefined;
+  ProductTracking: undefined;
+
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>()
 
 const AppNavigator = () => {
   const { user, isLoading } = useAuth()
 
+  // Show loading indicator while checking authentication status
   if (isLoading) {
-    return null // Or a loading screen
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#5e72e4" />
+      </View>
+    )
   }
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!user ? (
-        <>
-          <Stack.Screen name="Start" component={StartScreen} />
-          <Stack.Screen name="Login" component={LoginScreen} />
-        </>
+      {user ? (
+        <Stack.Screen name="Main" component={TabNavigator} />
       ) : (
         <>
-          <Stack.Screen name="Main" component={TabNavigator} />
-          <Stack.Screen
-            name="Detail"
-            component={DetailScreen}
-            options={{
-              headerShown: true,
-              title: "Batafsil ma'lumot",
-              headerTitleStyle: { color: "#333", fontWeight: "bold" },
-              headerTintColor: "#3498db",
-            }}
-          />
-          <Stack.Screen
-            name="ProductTracking"
-            component={ProductTrackingScreen}
-            options={{
-              headerShown: true,
-              title: "Tovar haritasi",
-              headerTitleStyle: { color: "#333", fontWeight: "bold" },
-              headerTintColor: "#3498db",
-            }}
-          />
-          <Stack.Screen
-            name="DepartmentStats"
-            component={DepartmentStatsScreen}
-            options={{
-              headerShown: true,
-              title: "Bo'limlar statistikasi",
-              headerTitleStyle: { color: "#333", fontWeight: "bold" },
-              headerTintColor: "#3498db",
-            }}
-          />
+          <Stack.Screen name="Start" component={StartScreen} />
+          <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
+          <Stack.Screen name="EmployeeLogin" component={EmployeeLoginScreen} />
         </>
       )}
     </Stack.Navigator>

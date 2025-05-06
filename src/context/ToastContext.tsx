@@ -1,6 +1,3 @@
-"use client"
-
-import type React from "react"
 import { createContext, useState, useContext, useRef, useEffect } from "react"
 import { Animated, StyleSheet, Text } from "react-native"
 import type { ToastProps } from "../types"
@@ -20,6 +17,7 @@ export const useToast = () => useContext(ToastContext)
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toast, setToast] = useState<ToastProps | null>(null)
   const fadeAnim = useRef(new Animated.Value(0)).current
+  const slideAnim = useRef(new Animated.Value(100)).current
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const showToast = (newToast: ToastProps) => {
@@ -28,11 +26,24 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     setToast(newToast)
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start()
+
+    // Reset animations
+    slideAnim.setValue(100)
+    fadeAnim.setValue(0)
+
+    // Start animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start()
 
     timeoutRef.current = setTimeout(() => {
       hideToast()
@@ -40,11 +51,18 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }
 
   const hideToast = () => {
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 100,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
       setToast(null)
     })
   }
@@ -82,6 +100,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             styles.container,
             {
               opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
               backgroundColor: getBackgroundColor(),
             },
           ]}
@@ -100,7 +119,7 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -115,5 +134,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "500",
+    textAlign: "center",
   },
 })

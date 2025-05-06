@@ -1,14 +1,13 @@
-"use client"
-
-import type React from "react"
 import { createContext, useState, useContext, useEffect } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import type { User } from "../types"
+import { axiosInstance } from "../api/axios"
+import axios from "axios"
 
 interface AuthContextType {
   user: User | null
   isLoading: boolean
-  login: (username: string, password: string) => Promise<boolean>
+  login: (username: string, password: string, isAdmin: boolean) => Promise<boolean>
   logout: () => void
 }
 
@@ -21,34 +20,6 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext)
 
-// Mock users for demo
-const mockUsers: User[] = [
-  {
-    id: "1",
-    fullName: "Admin Adminov",
-    username: "admin",
-    password: "admin123",
-    department: "Boshqaruv",
-    role: "admin",
-  },
-  {
-    id: "2",
-    fullName: "Foydalanuvchi Foydalanuvchiyev",
-    username: "user",
-    password: "user123",
-    department: "Tikuv",
-    role: "user",
-  },
-  {
-    id: "3",
-    fullName: "Ombor Omborchiyev",
-    username: "ombor",
-    password: "ombor123",
-    department: "Ombor",
-    role: "user",
-  },
-]
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -58,11 +29,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const loadUser = async () => {
       try {
         const userJson = await AsyncStorage.getItem("user")
-        if (userJson) {
+        const token = await AsyncStorage.getItem("token")
+        
+        if (userJson && token) {
           setUser(JSON.parse(userJson))
         }
       } catch (error) {
         console.error("Failed to load user from storage", error)
+        // Clear potentially corrupted data
+        await AsyncStorage.removeItem("user")
+        await AsyncStorage.removeItem("token")
       } finally {
         setIsLoading(false)
       }
@@ -71,16 +47,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadUser()
   }, [])
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (username: string, password: string, isAdmin: boolean): Promise<boolean> => {
     try {
-      // Find user with matching credentials
-      const foundUser = mockUsers.find((u) => u.username === username && u.password === password)
+      const endpoint = isAdmin ? "/api/auth/admin/login" : "/api/auth/employee/login"
+      
+      const response = await axios.post(`https://dodo-kids-back-end.onrender.com${endpoint}`, {
+        login: username,
+        password: password,
+      })
 
-      if (foundUser) {
-        setUser(foundUser)
-        await AsyncStorage.setItem("user", JSON.stringify(foundUser))
+      if (response.data) {
+        const { token } = response.data
+        
+        // Set the token in axios headers for subsequent requests
+        await AsyncStorage.setItem("token", token)
+        
+        let userData: User
+        
+        if (isAdmin) {
+          const { admin } = response.data
+          userData = {
+            id: admin.id,
+            fullName: admin.fullName || admin.login,
+            username: admin.login,
+            department: "Boshqaruv",
+            password: "", // Don't store password in memory
+            role: "admin",
+          }
+        } else {
+          const { employee } = response.data
+          userData = {
+            id: employee.id,
+            fullName: employee.fullName || employee.login,
+            username: employee.login,
+            department: employee.type || "Bo'lim",
+            password: "", // Don't store password in memory
+            role: "user",
+          }
+        }
+        
+        setUser(userData)
+        await AsyncStorage.setItem("user", JSON.stringify(userData))
         return true
       }
+      
       return false
     } catch (error) {
       console.error("Login error", error)
@@ -90,7 +100,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      // Remove token from axios headers
+      delete axiosInstance.defaults.headers.common["Authorization"]
+      
+      // Clear storage
+      await AsyncStorage.removeItem("token")
       await AsyncStorage.removeItem("user")
+      
+      // Update state
       setUser(null)
     } catch (error) {
       console.error("Logout error", error)

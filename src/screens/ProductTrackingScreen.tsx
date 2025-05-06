@@ -1,11 +1,20 @@
-"use client"
-
 import { useState } from "react"
-import { View, Text, StyleSheet, FlatList, TextInput, RefreshControl } from "react-native"
-import { useAuth } from "../context/AuthContext"
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TextInput,
+  RefreshControl,
+  StatusBar,
+  TouchableOpacity,
+  Platform
+} from "react-native"
 import { useToast } from "../context/ToastContext"
 import ItemJourney from "../components/ItemJourney"
-import { Search } from "react-native-feather"
+import { Search, ArrowLeft, Package, Tag, Layers } from "react-native-feather"
+import { useNavigation } from "@react-navigation/native"
+import LinearGradient from "react-native-linear-gradient"
 import type { ProductTrackingItem } from "../types"
 
 // Mock data for product tracking
@@ -95,7 +104,7 @@ const productTrackingData: ProductTrackingItem[] = [
 ]
 
 const ProductTrackingScreen = () => {
-  const { user } = useAuth()
+  const navigation = useNavigation()
   const { showToast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
@@ -115,51 +124,137 @@ const ProductTrackingScreen = () => {
 
   const handleSearch = (text: string) => {
     setSearchQuery(text)
-    // Implement search logic here
+    if (text.trim() === "") {
+      setProducts(productTrackingData)
+    } else {
+      const filtered = productTrackingData.filter(
+        (item) =>
+          item.model.toLowerCase().includes(text.toLowerCase()) ||
+          item.materialType.toLowerCase().includes(text.toLowerCase()) ||
+          item.color.toLowerCase().includes(text.toLowerCase()) ||
+          item.currentDepartment.toLowerCase().includes(text.toLowerCase()),
+      )
+      setProducts(filtered)
+    }
+  }
+
+  // Get color for department badge
+  const getDepartmentColor = (department: string) => {
+    const colorMap: Record<string, string> = {
+      "Tikuv": "#5e72e4",
+      "Ombor": "#2dce89",
+      "Bichish": "#fb6340",
+      "Qadoqlash": "#11cdef",
+      // Add more departments as needed
+    }
+    return colorMap[department] || "#8898aa" // Default color if not found
   }
 
   const renderProductItem = ({ item }: { item: ProductTrackingItem }) => (
     <View style={styles.productCard}>
       <View style={styles.productHeader}>
         <Text style={styles.productTitle}>{item.model}</Text>
-        <View style={styles.productBadge}>
+        <View style={[
+          styles.productBadge,
+          { backgroundColor: getDepartmentColor(item.currentDepartment) }
+        ]}>
           <Text style={styles.productBadgeText}>{item.currentDepartment}</Text>
         </View>
       </View>
+      
       <View style={styles.productDetails}>
-        <Text style={styles.productDetail}>Mato: {item.materialType}</Text>
-        <Text style={styles.productDetail}>Rang: {item.color}</Text>
-        <Text style={styles.productDetail}>O'lcham: {item.size}</Text>
+        <View style={styles.detailItem}>
+          <View style={styles.iconContainer}>
+            <Layers width={16} height={16} color="#5e72e4" />
+          </View>
+          <Text style={styles.productDetail}>{item.materialType}</Text>
+        </View>
+        
+        <View style={styles.detailItem}>
+          <View style={[
+            styles.colorDot, 
+            { backgroundColor: getColorCode(item.color) }
+          ]} />
+          <Text style={styles.productDetail}>{item.color}</Text>
+        </View>
+        
+        <View style={styles.detailItem}>
+          <View style={styles.iconContainer}>
+            <Tag width={16} height={16} color="#5e72e4" />
+          </View>
+          <Text style={styles.productDetail}>{item.size}</Text>
+        </View>
       </View>
+      
       <ItemJourney steps={item.journey} />
     </View>
   )
 
+  // Helper function to get color code from color name
+  const getColorCode = (colorName: string) => {
+    const colorMap: Record<string, string> = {
+      "Ko'k": "#3498db",
+      "Qizil": "#e74c3c",
+      "Qora": "#2c3e50",
+      "Yashil": "#2ecc71",
+      // Add more colors as needed
+    }
+    return colorMap[colorName] || "#95a5a6" // Default color if not found
+  }
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Tovar haritasi</Text>
-        <Text style={styles.subtitle}>{user?.department} bo'limi</Text>
-      </View>
-
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Search width={20} height={20} color="#95a5a6" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Qidirish..."
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
+      <StatusBar translucent barStyle="light-content" backgroundColor="transparent" />
+      
+      <LinearGradient
+        colors={['#5e72e4', '#324cdd']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}
+      >
+        <View style={styles.headerContent}>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => navigation.goBack()}
+          >
+            <ArrowLeft width={24} height={24} color="white" />
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>Mahsulot kuzatuvi</Text>
+            <Text style={styles.headerSubtitle}>Barcha mahsulotlar holati</Text>
+          </View>
         </View>
-      </View>
+        
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputContainer}>
+            <Search width={20} height={20} color="#8898aa" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Qidirish..."
+              placeholderTextColor="#8898aa"
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+          </View>
+        </View>
+      </LinearGradient>
 
       <FlatList
         data={products}
         renderItem={renderProductItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3498db"]} />}
+        style={{paddingTop: 20}}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            colors={["#5e72e4"]} 
+            tintColor="#5e72e4"
+            progressBackgroundColor="#ffffff"
+          />
+        }
+        showsVerticalScrollIndicator={false}
       />
     </View>
   )
@@ -168,37 +263,49 @@ const ProductTrackingScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f8f9fe",
   },
-  header: {
-    backgroundColor: "white",
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 60 : 50,
+    paddingBottom: 30,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
-  title: {
-    fontSize: 24,
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
+    color: "white",
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 4,
+  headerSubtitle: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.8)",
+    marginTop: 2,
   },
   searchContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
   },
   searchInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "white",
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 12,
-    height: 40,
+    height: 50,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -210,42 +317,40 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    height: 40,
+    height: 50,
     fontSize: 16,
-    color: "#333",
+    color: "#32325d",
   },
   listContent: {
     padding: 16,
     paddingBottom: 100,
+    marginTop: -20,
   },
   productCard: {
     backgroundColor: "white",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   productHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 16,
   },
   productTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
+    color: "#32325d",
   },
   productBadge: {
-    backgroundColor: "#3498db",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12,
   },
   productBadgeText: {
@@ -255,14 +360,35 @@ const styles = StyleSheet.create({
   },
   productDetails: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 12,
+    marginBottom: 16,
+    gap: 12,
+  },
+  detailItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(94, 114, 228, 0.05)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  iconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(94, 114, 228, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 6,
+  },
+  colorDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginRight: 6,
   },
   productDetail: {
     fontSize: 14,
-    color: "#666",
-    marginRight: 12,
-    marginBottom: 4,
+    color: "#32325d",
   },
 })
 

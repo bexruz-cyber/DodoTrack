@@ -12,7 +12,7 @@ const App = () => {
         <AuthProvider>
           <ToastProvider>
             <NavigationContainer>
-              <AppNavigator />
+              <AppNavigator  />
             </NavigationContainer>
           </ToastProvider>
         </AuthProvider>

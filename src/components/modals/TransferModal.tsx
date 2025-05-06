@@ -1,6 +1,3 @@
-"use client"
-
-import type React from "react"
 import { useState } from "react"
 import {
   View,
@@ -13,10 +10,11 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native"
-import { X } from "react-native-feather"
-import { useAuth } from "../context/AuthContext"
-import { useToast } from "../context/ToastContext"
-import type { TransferItem, ReceiveItem } from "../types"
+import { X, Package } from "react-native-feather"
+import { useAuth } from "../../context/AuthContext"
+import { useToast } from "../../context/ToastContext"
+import type { TransferItem, ReceiveItem } from "../../types"
+import LinearGradient from "react-native-linear-gradient"
 
 interface TransferModalProps {
   visible: boolean
@@ -85,41 +83,58 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose, onTrans
   if (!item) return null
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
+    <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.centeredView}>
         <View style={styles.modalView}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Uzatish</Text>
-            <TouchableOpacity onPress={onClose}>
-              <X width={24} height={24} color="#333" />
+          <LinearGradient
+            colors={['#5e72e4', '#324cdd']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.header}
+          >
+            <View style={styles.headerContent}>
+              <View style={styles.iconContainer}>
+                <Package width={24} height={24} color="white" />
+              </View>
+              <Text style={styles.title}>Uzatish</Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={onClose}
+              activeOpacity={0.7}
+            >
+              <X width={20} height={20} color="white" />
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
 
           <ScrollView style={styles.formContainer}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Model:</Text>
-              <Text style={styles.infoValue}>{item.model}</Text>
+            <View style={styles.infoCard}>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Model:</Text>
+                <Text style={styles.infoValue}>{item.model}</Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Mato turi:</Text>
+                <Text style={styles.infoValue}>{item.materialType}</Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Mavjud soni:</Text>
+                <Text style={styles.infoValue}>
+                  {"totalCount" in item ? item.totalCount : item.receivedCount}
+                </Text>
+              </View>
             </View>
 
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Mato turi:</Text>
-              <Text style={styles.infoValue}>{item.materialType}</Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Mavjud soni:</Text>
-              <Text style={styles.infoValue}>
-                {"totalCount" in item ? item.totalCount : item.receivedCount}
-              </Text>
-            </View>
-
-            <Text style={styles.label}>Qabul qiluvchi bo'lim *</Text>
+            <Text style={styles.label}>Qabul qiluvchi bo'lim <Text style={styles.required}>*</Text></Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionsContainer}>
               {departments.map((dept) => (
                 <TouchableOpacity
                   key={dept}
                   style={[styles.option, receiverDepartment === dept && styles.selectedOption]}
                   onPress={() => setReceiverDepartment(dept)}
+                  activeOpacity={0.7}
                 >
                   <Text style={[styles.optionText, receiverDepartment === dept && styles.selectedOptionText]}>
                     {dept}
@@ -128,13 +143,14 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose, onTrans
               ))}
             </ScrollView>
 
-            <Text style={styles.label}>Uzatilayotgan soni *</Text>
+            <Text style={styles.label}>Uzatilayotgan soni <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
               placeholder="Uzatilayotgan sonini kiriting"
               keyboardType="numeric"
               value={count}
               onChangeText={setCount}
+              placeholderTextColor="#8898aa"
             />
 
             <Text style={styles.label}>Qo'shimcha izoh</Text>
@@ -145,14 +161,24 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose, onTrans
               numberOfLines={4}
               value={notes}
               onChangeText={setNotes}
+              placeholderTextColor="#8898aa"
+              textAlignVertical="top"
             />
           </ScrollView>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+            <TouchableOpacity 
+              style={styles.cancelButton} 
+              onPress={onClose}
+              activeOpacity={0.7}
+            >
               <Text style={styles.cancelButtonText}>Bekor qilish</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+            <TouchableOpacity 
+              style={styles.submitButton} 
+              onPress={handleSubmit}
+              activeOpacity={0.7}
+            >
               <Text style={styles.submitButtonText}>Uzatish</Text>
             </TouchableOpacity>
           </View>
@@ -167,59 +193,94 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(50, 50, 93, 0.4)",
+    padding: 20,
   },
   modalView: {
-    width: "90%",
-    maxHeight: "80%",
+    width: "100%",
+    maxHeight: "90%",
     backgroundColor: "white",
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 16,
+    overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   header: {
+    padding: 16,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+  },
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
+    color: "white",
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   formContainer: {
+    padding: 16,
     maxHeight: "70%",
+  },
+  infoCard: {
+    backgroundColor: "#f8f9fe",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#e6e9f0",
   },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: "#e6e9f0",
   },
   infoLabel: {
-    fontSize: 16,
-    color: "#666",
+    fontSize: 14,
+    color: "#8898aa",
+    fontWeight: "500",
   },
   infoValue: {
-    fontSize: 16,
-    color: "#333",
-    fontWeight: "500",
+    fontSize: 14,
+    color: "#32325d",
+    fontWeight: "600",
   },
   label: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#333",
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#525f7f",
     marginBottom: 8,
     marginTop: 16,
+  },
+  required: {
+    color: "#f5365c",
   },
   optionsContainer: {
     flexDirection: "row",
@@ -227,64 +288,75 @@ const styles = StyleSheet.create({
   },
   option: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#f5f5f5",
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: "#f8f9fe",
     marginRight: 8,
     borderWidth: 1,
-    borderColor: "#e0e0e0",
+    borderColor: "#e6e9f0",
   },
   selectedOption: {
-    backgroundColor: "#3498db",
-    borderColor: "#3498db",
+    backgroundColor: "#5e72e4",
+    borderColor: "#5e72e4",
   },
   optionText: {
-    color: "#333",
+    color: "#525f7f",
+    fontWeight: "500",
   },
   selectedOptionText: {
     color: "white",
-    fontWeight: "500",
   },
   input: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: "#f8f9fe",
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    color: "#32325d",
     borderWidth: 1,
-    borderColor: "#e0e0e0",
-    marginBottom: 8,
+    borderColor: "#e6e9f0",
   },
   textArea: {
     height: 100,
-    textAlignVertical: "top",
+    paddingTop: 14,
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#e6e9f0",
   },
   cancelButton: {
     flex: 1,
-    padding: 15,
-    borderRadius: 8,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f8f9fe",
+    padding: 14,
+    borderRadius: 12,
     marginRight: 8,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e6e9f0",
   },
   cancelButtonText: {
-    color: "#333",
-    fontWeight: "500",
+    color: "#525f7f",
+    fontSize: 16,
+    fontWeight: "600",
   },
   submitButton: {
     flex: 1,
-    padding: 15,
-    borderRadius: 8,
-    backgroundColor: "#3498db",
+    backgroundColor: "#fb6340",
+    padding: 14,
+    borderRadius: 12,
     marginLeft: 8,
     alignItems: "center",
+    shadowColor: "#fb6340",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   submitButtonText: {
     color: "white",
-    fontWeight: "500",
+    fontSize: 16,
+    fontWeight: "600",
   },
 })
 

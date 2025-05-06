@@ -1,10 +1,19 @@
-"use client"
-
 import { useState } from "react"
-import { View, Text, StyleSheet, FlatList, TextInput, RefreshControl } from "react-native"
-import { useAuth } from "../context/AuthContext"
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TextInput,
+  RefreshControl,
+  StatusBar,
+  TouchableOpacity,
+  Platform
+} from "react-native"
 import { useToast } from "../context/ToastContext"
-import { Search } from "react-native-feather"
+import { Search, ArrowLeft, Users, Package, Activity } from "react-native-feather"
+import { useNavigation } from "@react-navigation/native"
+import LinearGradient from "react-native-linear-gradient"
 
 // Mock data for department statistics
 const departmentData = [
@@ -23,7 +32,7 @@ const departmentData = [
 ]
 
 const DepartmentStatsScreen = () => {
-  const { user } = useAuth()
+  const navigation = useNavigation()
   const { showToast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
@@ -55,22 +64,40 @@ const DepartmentStatsScreen = () => {
     <View style={styles.departmentCard}>
       <View style={styles.departmentHeader}>
         <Text style={styles.departmentName}>{item.name}</Text>
-        <View style={styles.efficiencyBadge}>
+        <View
+          style={[
+            styles.efficiencyBadge,
+            {
+              backgroundColor: getEfficiencyColor(item.efficiency),
+            },
+          ]}
+        >
           <Text style={styles.efficiencyText}>{item.efficiency}%</Text>
         </View>
       </View>
 
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
+          <View style={[styles.statIconContainer, { backgroundColor: 'rgba(94, 114, 228, 0.1)' }]}>
+            <Package width={16} height={16} color="#5e72e4" />
+          </View>
           <Text style={styles.statValue}>{item.sent}</Text>
           <Text style={styles.statLabel}>Yuborilgan</Text>
         </View>
+
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{item.received}</Text>
+          <View style={[styles.statIconContainer, { backgroundColor: 'rgba(45, 206, 137, 0.1)' }]}>
+            <Activity width={16} height={16} color="#2dce89" />
+          </View>
+          <Text style={[styles.statValue, { color: '#2dce89' }]}>{item.received}</Text>
           <Text style={styles.statLabel}>Qabul qilingan</Text>
         </View>
+
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{item.sent - item.received}</Text>
+          <View style={[styles.statIconContainer, { backgroundColor: 'rgba(251, 99, 64, 0.1)' }]}>
+            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#fb6340' }}>Δ</Text>
+          </View>
+          <Text style={[styles.statValue, { color: '#fb6340' }]}>{item.sent - item.received}</Text>
           <Text style={styles.statLabel}>Farq</Text>
         </View>
       </View>
@@ -92,53 +119,100 @@ const DepartmentStatsScreen = () => {
   )
 
   const getEfficiencyColor = (efficiency: number) => {
-    if (efficiency >= 95) return "#27ae60"
-    if (efficiency >= 90) return "#2ecc71"
-    if (efficiency >= 80) return "#f39c12"
-    return "#e74c3c"
+    if (efficiency >= 95) return "#2dce89"
+    if (efficiency >= 90) return "#5e72e4"
+    if (efficiency >= 80) return "#fb6340"
+    return "#f5365c"
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Bo'limlar statistikasi</Text>
-        <Text style={styles.subtitle}>{user?.department} bo'limi</Text>
-      </View>
+      <StatusBar translucent barStyle="light-content" backgroundColor="transparent" />
 
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Search width={20} height={20} color="#95a5a6" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Bo'lim nomini qidirish..."
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
+      <LinearGradient
+        colors={['#5e72e4', '#324cdd']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}
+      >
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <ArrowLeft width={24} height={24} color="white" />
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>Bo'limlar statistikasi</Text>
+            <Text style={styles.headerSubtitle}>Barcha bo'limlar faoliyati</Text>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.summaryContainer}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>{departmentData.length}</Text>
-          <Text style={styles.summaryLabel}>Jami bo'limlar</Text>
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputContainer}>
+            <Search width={20} height={20} color="#8898aa" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Bo'lim nomini qidirish..."
+              placeholderTextColor="#8898aa"
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+          </View>
         </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>{departmentData.reduce((sum, dept) => sum + dept.sent, 0)}</Text>
-          <Text style={styles.summaryLabel}>Jami yuborilgan</Text>
-        </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>{departmentData.reduce((sum, dept) => sum + dept.received, 0)}</Text>
-          <Text style={styles.summaryLabel}>Jami qabul qilingan</Text>
-        </View>
-      </View>
+      </LinearGradient>
 
-      <FlatList
-        data={departments}
-        renderItem={renderDepartmentItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3498db"]} />}
-      />
+      <View style={styles.contentContainer}>
+
+
+        <FlatList
+          data={departments}
+          renderItem={renderDepartmentItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          ListHeaderComponent={
+            <View style={styles.summaryContainer}>
+              <View style={styles.summaryCard}>
+                <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(94, 114, 228, 0.1)' }]}>
+                  <Users width={20} height={20} color="#5e72e4" />
+                </View>
+                <Text style={styles.summaryValue}>{departmentData.length}</Text>
+                <Text style={styles.summaryLabel}>Jami bo'limlar</Text>
+              </View>
+
+              <View style={styles.summaryCard}>
+                <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(45, 206, 137, 0.1)' }]}>
+                  <Package width={20} height={20} color="#2dce89" />
+                </View>
+                <Text style={[styles.summaryValue, { color: '#2dce89' }]}>
+                  {departmentData.reduce((sum, dept) => sum + dept.sent, 0)}
+                </Text>
+                <Text style={styles.summaryLabel}>Jami yuborilgan</Text>
+              </View>
+
+              <View style={styles.summaryCard}>
+                <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(17, 205, 239, 0.1)' }]}>
+                  <Activity width={20} height={20} color="#11cdef" />
+                </View>
+                <Text style={[styles.summaryValue, { color: '#11cdef' }]}>
+                  {departmentData.reduce((sum, dept) => sum + dept.received, 0)}
+                </Text>
+                <Text style={styles.summaryLabel}>Jami qabul</Text>
+              </View>
+            </View>
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={["#5e72e4"]}
+              tintColor="#5e72e4"
+              progressBackgroundColor="#ffffff"
+            />
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
     </View>
   )
 }
@@ -146,37 +220,50 @@ const DepartmentStatsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f8f9fe",
   },
-  header: {
-    backgroundColor: "white",
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 60 : 50,
+    paddingBottom: 30,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    zIndex: 30
   },
-  title: {
-    fontSize: 24,
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
+    color: "white",
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 4,
+  headerSubtitle: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.8)",
+    marginTop: 2,
   },
   searchContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
   },
   searchInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "white",
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 12,
-    height: 40,
+    height: 50,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -188,21 +275,25 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    height: 40,
+    height: 50,
     fontSize: 16,
-    color: "#333",
+    color: "#32325d",
+  },
+  contentContainer: {
+    flex: 1,
+    marginTop: -20,
   },
   summaryContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    padding: 16,
-    paddingTop: 0,
+    paddingBottom: 16,
+    paddingTop: 40
   },
   summaryCard: {
     backgroundColor: "white",
-    borderRadius: 12,
-    padding: 12,
-    width: "32%",
+    borderRadius: 16,
+    padding: 16,
+    width: "31%",
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -210,47 +301,55 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  summaryIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
   summaryValue: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#3498db",
+    color: "#5e72e4",
     marginBottom: 4,
   },
   summaryLabel: {
     fontSize: 12,
-    color: "#666",
+    color: "#8898aa",
     textAlign: "center",
   },
   listContent: {
     padding: 16,
+    paddingTop: 0,
     paddingBottom: 100,
   },
   departmentCard: {
     backgroundColor: "white",
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   departmentHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 16,
   },
   departmentName: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
+    color: "#32325d",
   },
   efficiencyBadge: {
-    backgroundColor: "#3498db",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12,
   },
   efficiencyText: {
@@ -261,20 +360,29 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 12,
+    marginBottom: 16,
   },
   statItem: {
     alignItems: "center",
     flex: 1,
   },
+  statIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
   statValue: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
+    color: "#5e72e4",
+    marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: "#666",
+    color: "#8898aa",
   },
   progressContainer: {
     marginTop: 8,
