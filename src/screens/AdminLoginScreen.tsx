@@ -108,7 +108,9 @@ const AdminLoginScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.footerText}>Tekstil ishlab chiqarish boshqaruv tizimi</Text>
+      <Text style={styles.footerText}>Tekstil ishlab chiqarish boshqaruv tizimi
+     
+      </Text>
     </KeyboardAvoidingView>
   )
 }

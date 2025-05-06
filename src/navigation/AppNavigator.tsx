@@ -6,6 +6,8 @@ import StartScreen from '../screens/StartScreen'
 import AdminLoginScreen from '../screens/AdminLoginScreen'
 import EmployeeLoginScreen from '../screens/EmployeeLoginScreen'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import ProductTrackingScreen from '../screens/ProductTrackingScreen'
+import DepartmentStatsScreen from '../screens/DepartmentStatsScreen'
 
 // Define the stack navigator param list
 export type RootStackParamList = {
@@ -14,6 +16,8 @@ export type RootStackParamList = {
   EmployeeLogin: undefined;
   Main: undefined;
   ProductTracking: undefined;
+  DepartmentStats: undefined
+
 
 };
 
@@ -34,7 +38,11 @@ const AppNavigator = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user ? (
-        <Stack.Screen name="Main" component={TabNavigator} />
+        <>
+          <Stack.Screen name="Main" component={TabNavigator} />
+          <Stack.Screen name="ProductTracking" component={ProductTrackingScreen} />
+          <Stack.Screen name="DepartmentStats" component={DepartmentStatsScreen} />
+        </>
       ) : (
         <>
           <Stack.Screen name="Start" component={StartScreen} />
