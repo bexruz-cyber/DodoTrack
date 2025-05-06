@@ -16,6 +16,8 @@ import ItemJourney from "../components/ItemJourney"
 import type { ProductTrackingItem } from "../types"
 import { ChevronRight, BarChart2, PieChart, Box, TrendingUp } from "react-native-feather"
 import LinearGradient from "react-native-linear-gradient"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import { RootStackParamList } from "../navigation/AppNavigator"
 
 // Mock data for charts
 const departmentData = [
@@ -125,10 +127,11 @@ const productTrackingData: ProductTrackingItem[] = [
 
 const { width } = Dimensions.get("window")
 
+type StartScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const DashboardScreen = () => {
   const { user } = useAuth()
   const { showToast } = useToast()
-  const navigation = useNavigation()
+  const navigation = useNavigation<StartScreenNavigationProp>()
   const [timeRange, setTimeRange] = useState<"day" | "week" | "month" | "year">("month")
   const [refreshing, setRefreshing] = useState(false)
 
@@ -201,7 +204,7 @@ const DashboardScreen = () => {
 
         <TouchableOpacity 
           style={styles.viewAllButton} 
-          onPress={() => navigation.navigate("DepartmentStats" as never)}
+          onPress={() => navigation.navigate("DepartmentStats")}
           activeOpacity={0.7}
         >
           <Text style={styles.viewAllButtonText}>Hammasini ko'rish</Text>
@@ -239,7 +242,7 @@ const DashboardScreen = () => {
 
         <TouchableOpacity 
           style={styles.viewAllButton} 
-          onPress={() => navigation.navigate("ProductTracking" as never)}
+          onPress={() => navigation.navigate("ProductTracking")}
           activeOpacity={0.7}
         >
           <Text style={styles.viewAllButtonText}>Hammasini ko'rish</Text>

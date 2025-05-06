@@ -319,11 +319,6 @@ const HomeScreen = () => {
     []
   )
 
-  // Filter items based on user's department
-  const filteredTransferItems = transferItems.filter(
-    (item) => item.senderDepartment === user?.department || item.fullName === user?.fullName,
-  )
-
   const onRefresh = useCallback(() => {
     setIsRefreshing(true)
     // Simulate data fetching
