@@ -9,6 +9,7 @@ import AdminScreen from "../screens/AdminScreen"
 import ProductTrackingScreen from "../screens/ProductTrackingScreen"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useRef, useEffect } from "react"
+import DepartmentStatsScreen from "../screens/DepartmentStatsScreen"
 
 type TabParamList = {
   DashboardTab: undefined;
@@ -16,6 +17,8 @@ type TabParamList = {
   HomeTab: undefined;
   ProfileTab: undefined;
   AdminTab: undefined;
+  DepartmentStatsTab: undefined
+
 };
 
 const Tab = createBottomTabNavigator<TabParamList>()
@@ -25,20 +28,20 @@ const TabNavigator = () => {
   const insets = useSafeAreaInsets()
 
   // Custom tab bar icon with animation
-  const TabIcon = ({ 
-    size, 
-    icon: Icon, 
-    focused, 
-    isHome = false 
-  }: { 
-    color: string; 
-    size: number; 
-    icon: any; 
+  const TabIcon = ({
+    size,
+    icon: Icon,
+    focused,
+    isHome = false
+  }: {
+    color: string;
+    size: number;
+    icon: any;
     focused: boolean;
     isHome?: boolean;
   }) => {
     const scaleValue = useRef(new Animated.Value(1)).current;
-    
+
     useEffect(() => {
       if (focused) {
         Animated.spring(scaleValue, {
@@ -96,53 +99,65 @@ const TabNavigator = () => {
         name="DashboardTab"
         component={DashboardScreen}
         options={{
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({ color, focused }) => (
             <TabIcon color={color} size={22} icon={BarChart2} focused={focused} />
           ),
         }}
       />
-      
+
       <Tab.Screen
         name="ProductTrackingTab"
         component={ProductTrackingScreen}
         options={{
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({ color, focused }) => (
             <TabIcon color={color} size={22} icon={Map} focused={focused} />
           ),
         }}
       />
-      
+
       <Tab.Screen
         name="HomeTab"
         component={HomeScreen}
         options={{
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({ color, focused }) => (
             <TabIcon color={color} size={26} icon={Home} focused={focused} isHome={true} />
           ),
         }}
       />
-      
+
       <Tab.Screen
         name="ProfileTab"
         component={ProfileScreen}
         options={{
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({ color, focused }) => (
             <TabIcon color={color} size={22} icon={User} focused={focused} />
           ),
         }}
       />
-      
-      {user?.role === "admin" && (
+
+      {user?.role === "admin" ? (
         <Tab.Screen
           name="AdminTab"
           component={AdminScreen}
           options={{
-            tabBarIcon: ({ color, size, focused }) => (
+            tabBarIcon: ({ color, focused }) => (
               <TabIcon color={color} size={22} icon={Settings} focused={focused} />
             ),
           }}
         />
-      )}
+      ) :
+        (
+          <Tab.Screen
+            name="DepartmentStatsTab"
+            component={DepartmentStatsScreen}
+            options={{
+              tabBarIcon: ({ color, focused }) => (
+                <TabIcon color={color} size={22} icon={Settings} focused={focused} />
+              ),
+            }}
+          />
+        )
+      }
     </Tab.Navigator>
   )
 }
