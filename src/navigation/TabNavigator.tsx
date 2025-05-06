@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import { View, StyleSheet, Animated, Platform } from "react-native"
+import { View, StyleSheet, Animated } from "react-native"
 import { Home, User, BarChart2, Settings, Map } from "react-native-feather"
 import { useAuth } from "../context/AuthContext"
 import HomeScreen from "../screens/HomeScreen"
