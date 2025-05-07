@@ -33,7 +33,6 @@ axiosInstance.interceptors.response.use(
   (error) => {
     // Handle global errors here
     if (error.response && error.response.status === 401) {
-      // Handle unauthorized access
       // You might want to redirect to login screen
     }
     return Promise.reject(error)

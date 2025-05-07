@@ -2,17 +2,22 @@ import React from "react"
 import { FlatList, StyleSheet, RefreshControl, View, Text, ActivityIndicator } from "react-native"
 import ListItem from "./ListItem"
 
+interface Departments {
+  id: string,
+  name: string
+}
+
 interface DepartmentListProps {
-  departments: string[]
+  departments: Departments[],
   refreshing: boolean
   onRefresh: () => void
-  onEdit: (index: number) => void
-  onDelete: (index: number) => void
+  onEdit: (id: string) => void
+  onDelete: (id: string) => void
   loading?: boolean
 }
 
-const DepartmentList = ({ departments, refreshing, onRefresh, onEdit, onDelete, loading = false }: DepartmentListProps) => {
-  if (loading && departments.length === 0) {
+const DepartmentList = ({ departments, refreshing, onRefresh, onEdit, onDelete, loading }: DepartmentListProps) => {
+  if (loading) {
     return (
       <View style={styles.loaderContainer}>
         <ActivityIndicator color="#5e72e4" size="large" />
@@ -21,32 +26,30 @@ const DepartmentList = ({ departments, refreshing, onRefresh, onEdit, onDelete, 
     )
   }
 
-  if (departments.length === 0 && !loading) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Bo'limlar mavjud emas</Text>
-        <Text style={styles.emptySubtext}>Yangi bo'lim qo'shish uchun + tugmasini bosing</Text>
-      </View>
-    )
-  }
 
   return (
     <FlatList
       data={departments}
-      keyExtractor={(_, index) => index.toString()}
-      renderItem={({ item, index }) => (
+      keyExtractor={(item) => item.id.toString()}
+      ListEmptyComponent={
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Bo'limlar mavjud emas</Text>
+          <Text style={styles.emptySubtext}>Yangi bo'lim qo'shish uchun + tugmasini bosing</Text>
+        </View>
+      }
+      renderItem={({ item }) => (
         <ListItem
-          title={item}
-          onEdit={() => onEdit(index)}
-          onDelete={() => onDelete(index)}
+          title={item.name}
+          onEdit={() => onEdit(item.id)}
+          onDelete={() => onDelete(item.id)}
         />
       )}
       contentContainerStyle={styles.listContent}
       refreshControl={
-        <RefreshControl 
-          refreshing={refreshing} 
-          onRefresh={onRefresh} 
-          colors={["#5e72e4"]} 
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={["#5e72e4"]}
           tintColor="#5e72e4"
           progressBackgroundColor="#ffffff"
         />
@@ -61,10 +64,8 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   loaderContainer: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8f9fe",
   },
   loaderText: {
     marginTop: 12,
@@ -72,11 +73,9 @@ const styles = StyleSheet.create({
     color: "#8898aa",
   },
   emptyContainer: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#f8f9fe",
   },
   emptyText: {
     fontSize: 18,

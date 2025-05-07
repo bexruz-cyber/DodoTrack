@@ -269,7 +269,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 16,
     paddingBottom: 40,
-    marginTop: -20,
   },
   card: {
     backgroundColor: "white",

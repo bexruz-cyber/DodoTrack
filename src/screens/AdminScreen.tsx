@@ -6,6 +6,7 @@ import {
   Modal,
   Alert,
   TouchableOpacity,
+  Platform,
 } from "react-native"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
@@ -18,14 +19,38 @@ import SizeList from "../components/lists/SizeList"
 import EmployeeModal from "../components/modals/EmployeeModal"
 import SimpleModal from "../components/modals/SimpleModal"
 import { Plus } from "react-native-feather"
+import LinearGradient from "react-native-linear-gradient"
 
-// Components
-
-// Types
 interface Employee {
   id: string
   login: string
-  type: string
+  department: {
+    id: string,
+    name: string
+  }
+  departmentId: string
+  createdAt: string
+  updatedAt: string
+}
+
+
+interface Color {
+  id: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
+interface Size {
+  id: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
+interface EmployeeType {
+  id: string
+  name: string
   createdAt: string
   updatedAt: string
 }
@@ -40,14 +65,14 @@ const AdminScreen = () => {
   const [loading, setLoading] = useState(false)
 
   const [employees, setEmployees] = useState<Employee[]>([])
-  const [departments, setDepartments] = useState<string[]>(["Tikuv", "Ombor", "Bichish", "Qadoqlash"])
-  const [colors, setColors] = useState<string[]>(["Qora", "Oq", "Ko'k", "Qizil", "Yashil"])
-  const [sizes, setSizes] = useState<string[]>(["XS", "S", "M", "L", "XL", "XXL"])
+  const [employeeTypes, setEmployeeTypes] = useState<EmployeeType[]>([])
+  const [colors, setColors] = useState<Color[]>([])
+  const [sizes, setSizes] = useState<Size[]>([])
 
   const [newEmployee, setNewEmployee] = useState({
     login: "",
     password: "",
-    type: "ombor",
+    typeId: "",
   })
   const [newDepartment, setNewDepartment] = useState("")
   const [newColor, setNewColor] = useState("")
@@ -57,21 +82,49 @@ const AdminScreen = () => {
 
   useEffect(() => {
     fetchEmployees()
+    fetchEmployeeTypes()
+    fetchColors()
+    fetchSizes()
   }, [])
 
+
   const fetchEmployees = async () => {
-    setLoading(true)
     try {
       const response = await axiosInstance.get("/api/employees")
       setEmployees(response.data)
     } catch (error) {
       console.error("Error fetching employees:", error)
-      showToast({
-        type: "error",
-        message: "Xodimlarni yuklashda xatolik yuz berdi",
-      })
-    } finally {
-      setLoading(false)
+      throw error
+    }
+  }
+
+  const fetchEmployeeTypes = async () => {
+    try {
+      const response = await axiosInstance.get("/api/employeeType")
+      setEmployeeTypes(response.data)
+    } catch (error) {
+      console.error("Error fetching employee types:", error)
+      throw error
+    }
+  }
+
+  const fetchColors = async () => {
+    try {
+      const response = await axiosInstance.get("/api/color")
+      setColors(response.data)
+    } catch (error) {
+      console.error("Error fetching colors:", error)
+      throw error
+    }
+  }
+
+  const fetchSizes = async () => {
+    try {
+      const response = await axiosInstance.get("/api/size")
+      setSizes(response.data)
+    } catch (error) {
+      console.error("Error fetching sizes:", error)
+      throw error
     }
   }
 
@@ -79,9 +132,18 @@ const AdminScreen = () => {
     setRefreshing(true)
     try {
       await fetchEmployees()
+      await fetchEmployeeTypes()
+      await fetchColors()
+      await fetchSizes()
       showToast({
         type: "success",
         message: "Ma'lumotlar yangilandi",
+      })
+    } catch (error) {
+      console.error("Error refreshing data:", error)
+      showToast({
+        type: "error",
+        message: "Ma'lumotlarni yangilashda xatolik yuz berdi",
       })
     } finally {
       setRefreshing(false)
@@ -89,7 +151,6 @@ const AdminScreen = () => {
   }
 
   const handleAddButtonPress = () => {
-    // Open the appropriate modal based on the active tab
     if (activeTab === "users") {
       openModal("user")
     } else if (activeTab === "departments") {
@@ -108,24 +169,23 @@ const AdminScreen = () => {
 
     if (id) {
       if (type === "user") {
-        // Find the employee to edit
         const employeeToEdit = employees.find((e) => e.id === id)
         if (employeeToEdit) {
           setNewEmployee({
             login: employeeToEdit.login,
             password: "", // Password field is empty when editing
-            type: employeeToEdit.type,
+            typeId: employeeToEdit.departmentId,
           })
         }
       } else if (type === "department") {
-        const deptToEdit = departments.find((_, index) => index.toString() === id)
-        if (deptToEdit) setNewDepartment(deptToEdit)
+        const deptToEdit = employeeTypes.find((dept) => dept.id === id)
+        if (deptToEdit) setNewDepartment(deptToEdit.name)
       } else if (type === "color") {
-        const colorToEdit = colors.find((_, index) => index.toString() === id)
-        if (colorToEdit) setNewColor(colorToEdit)
+        const colorToEdit = colors.find((color) => color.id === id)
+        if (colorToEdit) setNewColor(colorToEdit.name)
       } else if (type === "size") {
-        const sizeToEdit = sizes.find((_, index) => index.toString() === id)
-        if (sizeToEdit) setNewSize(sizeToEdit)
+        const sizeToEdit = sizes.find((size) => size.id === id)
+        if (sizeToEdit) setNewSize(sizeToEdit.name)
       }
     } else {
       resetForm()
@@ -142,7 +202,7 @@ const AdminScreen = () => {
     setNewEmployee({
       login: "",
       password: "",
-      type: "ombor",
+      typeId: employeeTypes.length > 0 ? employeeTypes[0].name.toLowerCase() : "",
     })
     setNewDepartment("")
     setNewColor("")
@@ -151,7 +211,7 @@ const AdminScreen = () => {
   }
 
   const handleAddEmployee = async () => {
-    if (!newEmployee.login || !newEmployee.type) {
+    if (!newEmployee.login || !newEmployee.typeId) {
       showToast({
         type: "warning",
         message: "Login va bo'lim maydonlarini to'ldiring",
@@ -164,8 +224,8 @@ const AdminScreen = () => {
       if (editingId) {
         await axiosInstance.put(`/api/employees/${editingId}`, {
           login: newEmployee.login,
-          password: newEmployee.password || "user123", // Use default if empty
-          type: newEmployee.type
+          password: newEmployee.password || undefined, // Only send if not empty
+          type: newEmployee.typeId
         })
         showToast({
           type: "success",
@@ -174,15 +234,15 @@ const AdminScreen = () => {
       } else {
         await axiosInstance.post("/api/employees", {
           login: newEmployee.login,
-          password: newEmployee.password || "user123", // Use default if empty
-          type: newEmployee.type
+          password: newEmployee.password, // Use default if empty
+          typeId: newEmployee.typeId
         })
         showToast({
           type: "success",
           message: "Xodim muvaffaqiyatli qo'shildi",
         })
       }
-      fetchEmployees()
+      await fetchEmployees()
       closeModal()
     } catch (error) {
       console.error("Error saving employee:", error)
@@ -195,7 +255,7 @@ const AdminScreen = () => {
     }
   }
 
-  const handleAddDepartment = () => {
+  const handleAddDepartment = async () => {
     if (!newDepartment) {
       showToast({
         type: "warning",
@@ -204,27 +264,46 @@ const AdminScreen = () => {
       return
     }
 
-    if (editingId) {
-      const index = Number.parseInt(editingId)
-      const updatedDepartments = [...departments]
-      updatedDepartments[index] = newDepartment
-      setDepartments(updatedDepartments)
-      showToast({
-        type: "success",
-        message: "Bo'lim muvaffaqiyatli tahrirlandi",
-      })
-    } else {
-      setDepartments([...departments, newDepartment])
+    console.log(newDepartment);
+
+
+    setLoading(true)
+    try {
+      if (editingId) {
+        await axiosInstance.put(`/api/employeeType/${editingId}`, {
+          name: newDepartment
+        })
+        showToast({
+          type: "success",
+          message: "Bo'lim muvaffaqiyatli tahrirlandi",
+        })
+      } else {
+        await axiosInstance.post("/api/employeeType", {
+          name: newDepartment
+        })
+        showToast({
+          type: "success",
+          message: "Bo'lim muvaffaqiyatli qo'shildi",
+        })
+      }
       showToast({
         type: "success",
         message: "Bo'lim muvaffaqiyatli qo'shildi",
       })
+      await fetchEmployeeTypes()
+      closeModal()
+    } catch (error: any) {
+      console.error("Error saving department:", error.response)
+      showToast({
+        type: "error",
+        message: "Bo'limni saqlashda xatolik yuz berdi",
+      })
+    } finally {
+      setLoading(false)
     }
-
-    closeModal()
   }
 
-  const handleAddColor = () => {
+  const handleAddColor = async () => {
     if (!newColor) {
       showToast({
         type: "warning",
@@ -233,27 +312,39 @@ const AdminScreen = () => {
       return
     }
 
-    if (editingId) {
-      const index = Number.parseInt(editingId)
-      const updatedColors = [...colors]
-      updatedColors[index] = newColor
-      setColors(updatedColors)
+    setLoading(true)
+    try {
+      if (editingId) {
+        await axiosInstance.put(`/api/color/${editingId}`, {
+          name: newColor
+        })
+        showToast({
+          type: "success",
+          message: "Rang muvaffaqiyatli tahrirlandi",
+        })
+      } else {
+        await axiosInstance.post("/api/color", {
+          name: newColor
+        })
+        showToast({
+          type: "success",
+          message: "Rang muvaffaqiyatli qo'shildi",
+        })
+      }
+      await fetchColors()
+      closeModal()
+    } catch (error) {
+      console.error("Error saving color:", error)
       showToast({
-        type: "success",
-        message: "Rang muvaffaqiyatli tahrirlandi",
+        type: "error",
+        message: "Rangni saqlashda xatolik yuz berdi",
       })
-    } else {
-      setColors([...colors, newColor])
-      showToast({
-        type: "success",
-        message: "Rang muvaffaqiyatli qo'shildi",
-      })
+    } finally {
+      setLoading(false)
     }
-
-    closeModal()
   }
 
-  const handleAddSize = () => {
+  const handleAddSize = async () => {
     if (!newSize) {
       showToast({
         type: "warning",
@@ -262,24 +353,36 @@ const AdminScreen = () => {
       return
     }
 
-    if (editingId) {
-      const index = Number.parseInt(editingId)
-      const updatedSizes = [...sizes]
-      updatedSizes[index] = newSize
-      setSizes(updatedSizes)
+    setLoading(true)
+    try {
+      if (editingId) {
+        await axiosInstance.put(`/api/size/${editingId}`, {
+          name: newSize
+        })
+        showToast({
+          type: "success",
+          message: "O'lcham muvaffaqiyatli tahrirlandi",
+        })
+      } else {
+        await axiosInstance.post("/api/size", {
+          name: newSize
+        })
+        showToast({
+          type: "success",
+          message: "O'lcham muvaffaqiyatli qo'shildi",
+        })
+      }
+      await fetchSizes()
+      closeModal()
+    } catch (error) {
+      console.error("Error saving size:", error)
       showToast({
-        type: "success",
-        message: "O'lcham muvaffaqiyatli tahrirlandi",
+        type: "error",
+        message: "O'lchamni saqlashda xatolik yuz berdi",
       })
-    } else {
-      setSizes([...sizes, newSize])
-      showToast({
-        type: "success",
-        message: "O'lcham muvaffaqiyatli qo'shildi",
-      })
+    } finally {
+      setLoading(false)
     }
-
-    closeModal()
   }
 
   const handleDeleteEmployee = async (id: string) => {
@@ -292,7 +395,7 @@ const AdminScreen = () => {
           setLoading(true)
           try {
             await axiosInstance.delete(`/api/employees/${id}`)
-            fetchEmployees()
+            await fetchEmployees()
             showToast({
               type: "success",
               message: "Xodim muvaffaqiyatli o'chirildi",
@@ -311,55 +414,88 @@ const AdminScreen = () => {
     ])
   }
 
-  const handleDeleteDepartment = (index: number) => {
+  const handleDeleteDepartment = async (id: string) => {
     Alert.alert("Tasdiqlash", "Haqiqatan ham bu bo'limni o'chirmoqchimisiz?", [
       { text: "Bekor qilish", style: "cancel" },
       {
         text: "O'chirish",
         style: "destructive",
-        onPress: () => {
-          const updatedDepartments = departments.filter((_, i) => i !== index)
-          setDepartments(updatedDepartments)
-          showToast({
-            type: "success",
-            message: "Bo'lim muvaffaqiyatli o'chirildi",
-          })
+        onPress: async () => {
+          setLoading(true)
+          try {
+            await axiosInstance.delete(`/api/employeeType/${id}`)
+            await fetchEmployeeTypes()
+            showToast({
+              type: "success",
+              message: "Bo'lim muvaffaqiyatli o'chirildi",
+            })
+          } catch (error) {
+            console.error("Error deleting department:", error)
+            showToast({
+              type: "error",
+              message: "Bo'limni o'chirishda xatolik yuz berdi",
+            })
+          } finally {
+            setLoading(false)
+          }
         },
       },
     ])
   }
 
-  const handleDeleteColor = (index: number) => {
+  const handleDeleteColor = async (id: string) => {
     Alert.alert("Tasdiqlash", "Haqiqatan ham bu rangni o'chirmoqchimisiz?", [
       { text: "Bekor qilish", style: "cancel" },
       {
         text: "O'chirish",
         style: "destructive",
-        onPress: () => {
-          const updatedColors = colors.filter((_, i) => i !== index)
-          setColors(updatedColors)
-          showToast({
-            type: "success",
-            message: "Rang muvaffaqiyatli o'chirildi",
-          })
+        onPress: async () => {
+          setLoading(true)
+          try {
+            await axiosInstance.delete(`/api/color/${id}`)
+            await fetchColors()
+            showToast({
+              type: "success",
+              message: "Rang muvaffaqiyatli o'chirildi",
+            })
+          } catch (error) {
+            console.error("Error deleting color:", error)
+            showToast({
+              type: "error",
+              message: "Rangni o'chirishda xatolik yuz berdi",
+            })
+          } finally {
+            setLoading(false)
+          }
         },
       },
     ])
   }
 
-  const handleDeleteSize = (index: number) => {
+  const handleDeleteSize = async (id: string) => {
     Alert.alert("Tasdiqlash", "Haqiqatan ham bu o'lchamni o'chirmoqchimisiz?", [
       { text: "Bekor qilish", style: "cancel" },
       {
         text: "O'chirish",
         style: "destructive",
-        onPress: () => {
-          const updatedSizes = sizes.filter((_, i) => i !== index)
-          setSizes(updatedSizes)
-          showToast({
-            type: "success",
-            message: "O'lcham muvaffaqiyatli o'chirildi",
-          })
+        onPress: async () => {
+          setLoading(true)
+          try {
+            await axiosInstance.delete(`/api/size/${id}`)
+            await fetchSizes()
+            showToast({
+              type: "success",
+              message: "O'lcham muvaffaqiyatli o'chirildi",
+            })
+          } catch (error) {
+            console.error("Error deleting size:", error)
+            showToast({
+              type: "error",
+              message: "O'lchamni o'chirishda xatolik yuz berdi",
+            })
+          } finally {
+            setLoading(false)
+          }
         },
       },
     ])
@@ -367,61 +503,69 @@ const AdminScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Admin boshqaruvi</Text>
+      <LinearGradient
+        colors={['#5e72e4', '#324cdd']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
+        <Text style={styles.title}>Admin panel</Text>
         <Text style={styles.subtitle}>{user?.department} bo'limi</Text>
+      </LinearGradient>
+      <View style={{ paddingHorizontal: 20, paddingTop: 10 }}>
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+
+        {activeTab === "users" && (
+          <EmployeeList
+            employees={employees}
+            loading={loading}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            onEdit={(id) => openModal("user", id)}
+            onDelete={handleDeleteEmployee}
+          />
+        )}
+        {activeTab === "departments" && (
+          <DepartmentList
+            departments={employeeTypes}
+            loading={loading}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            onEdit={(id) => openModal("department", id)}
+            onDelete={handleDeleteDepartment}
+          />
+        )}
+        {activeTab === "colors" && (
+          <ColorList
+            colors={colors.map(color => ({ id: color.id, name: color.name }))}
+            loading={loading}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            onEdit={(id) => openModal("color", id)}
+            onDelete={handleDeleteColor}
+          />
+        )}
+        {activeTab === "sizes" && (
+          <SizeList
+            sizes={sizes.map(size => ({ id: size.id, name: size.name }))}
+            loading={loading}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            onEdit={(id) => openModal("size", id)}
+            onDelete={handleDeleteSize}
+          />
+        )}
       </View>
-
-      <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
-
-      {activeTab === "users" && (
-        <EmployeeList
-          employees={employees}
-          loading={loading}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          onEdit={(id) => openModal("user", id)}
-          onDelete={handleDeleteEmployee}
-        />
-      )}
-      {activeTab === "departments" && (
-        <DepartmentList
-          departments={departments}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          onEdit={(id) => openModal("department", id.toString())}
-          onDelete={handleDeleteDepartment}
-        />
-      )}
-      {activeTab === "colors" && (
-        <ColorList
-          colors={colors}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          onEdit={(id) => openModal("color", id.toString())}
-          onDelete={handleDeleteColor}
-        />
-      )}
-      {activeTab === "sizes" && (
-        <SizeList
-          sizes={sizes}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          onEdit={(id) => openModal("size", id.toString())}
-          onDelete={handleDeleteSize}
-        />
-      )}
-
       <TouchableOpacity style={styles.button} onPress={handleAddButtonPress} activeOpacity={0.8}>
         <Plus width={24} height={24} color="white" />
       </TouchableOpacity>
 
-      <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
+      <Modal animationType="fade" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
         {modalType === "user" ? (
           <EmployeeModal
             newEmployee={newEmployee}
             setNewEmployee={setNewEmployee}
-            departments={departments}
+            departments={employeeTypes}
             loading={loading}
             editingId={editingId}
             onSave={handleAddEmployee}
@@ -429,6 +573,7 @@ const AdminScreen = () => {
           />
         ) : (
           <SimpleModal
+            loading={loading}
             modalType={modalType}
             editingId={editingId}
             newDepartment={newDepartment}
@@ -451,21 +596,24 @@ const AdminScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: "#f4f4f4",
   },
   header: {
-    marginBottom: 20,
-    paddingTop: 40,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 25,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
-    color: "#333",
+    color: "white",
   },
   subtitle: {
     fontSize: 16,
-    color: "#777",
+    color: "rgba(255, 255, 255, 0.8)",
+    marginTop: 4,
   },
   button: {
     position: "absolute",

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import {
   View,
   Text,
@@ -12,12 +12,13 @@ import {
 } from "react-native"
 import { useToast } from "../context/ToastContext"
 import ItemJourney from "../components/ItemJourney"
-import { Search, ArrowLeft, Package, Tag, Layers } from "react-native-feather"
+import { Search, ArrowLeft, Tag, Layers, Filter } from "react-native-feather"
 import { useNavigation } from "@react-navigation/native"
 import LinearGradient from "react-native-linear-gradient"
 import type { ProductTrackingItem } from "../types"
+import BottomSheet from "@gorhom/bottom-sheet"
+import FilterBottomSheet from "../components/FilterBottomSheet"
 
-// Mock data for product tracking
 const productTrackingData: ProductTrackingItem[] = [
   {
     id: "1",
@@ -110,6 +111,33 @@ const ProductTrackingScreen = () => {
   const [refreshing, setRefreshing] = useState(false)
   const [products, setProducts] = useState<ProductTrackingItem[]>(productTrackingData)
 
+  // Filter options
+  const departments = ["Tikuv", "Ombor", "Bichish", "Qadoqlash"]
+  const models = ["Model A", "Model B", "Model C", "Model D"]
+  const materials = ["Paxta", "Ipak", "Jun", "Sintetika"]
+  const colors = ["Ko'k", "Qizil", "Qora", "Yashil"]
+  const sizes = ["S", "M", "L", "XL"]
+
+  // Filter configuration
+  const filterOptions = [
+    { label: "Bo'lim", value: "", options: departments, field: "currentDepartment" },
+    { label: "Model", value: "", options: models, field: "model" },
+    { label: "Mato turi", value: "", options: materials, field: "materialType" },
+    { label: "Rangi", value: "", options: colors, field: "color" },
+    { label: "O'lchami", value: "", options: sizes, field: "size" },
+  ]
+
+  const initialFilterValues = {
+    currentDepartment: "",
+    model: "",
+    materialType: "",
+    color: "",
+    size: "",
+  }
+
+  // Bottom Sheet ref
+  const bottomSheetRef = useRef<BottomSheet>(null)
+
   const onRefresh = () => {
     setRefreshing(true)
     // Simulate data fetching
@@ -138,6 +166,34 @@ const ProductTrackingScreen = () => {
     }
   }
 
+  const handlePresentFilterSheet = useCallback(() => {
+    bottomSheetRef.current?.expand()
+  }, [])
+
+  const handleApplyFilter = useCallback((filterValues: any) => {
+    // Filter products based on selected values
+    let filteredProducts = [...productTrackingData]
+    
+    Object.keys(filterValues).forEach(key => {
+      if (filterValues[key]) {
+        filteredProducts = filteredProducts.filter(product => 
+          product[key as keyof ProductTrackingItem] === filterValues[key]
+        )
+      }
+    })
+    
+    setProducts(filteredProducts)
+    
+    showToast({
+      type: "success",
+      message: "Filtrlar qo'llanildi",
+    })
+  }, [showToast])
+
+  const handleResetFilter = useCallback(() => {
+    setProducts(productTrackingData)
+  }, [])
+
   // Get color for department badge
   const getDepartmentColor = (department: string) => {
     const colorMap: Record<string, string> = {
@@ -161,7 +217,7 @@ const ProductTrackingScreen = () => {
           <Text style={styles.productBadgeText}>{item.currentDepartment}</Text>
         </View>
       </View>
-      
+
       <View style={styles.productDetails}>
         <View style={styles.detailItem}>
           <View style={styles.iconContainer}>
@@ -169,15 +225,15 @@ const ProductTrackingScreen = () => {
           </View>
           <Text style={styles.productDetail}>{item.materialType}</Text>
         </View>
-        
+
         <View style={styles.detailItem}>
           <View style={[
-            styles.colorDot, 
+            styles.colorDot,
             { backgroundColor: getColorCode(item.color) }
           ]} />
           <Text style={styles.productDetail}>{item.color}</Text>
         </View>
-        
+
         <View style={styles.detailItem}>
           <View style={styles.iconContainer}>
             <Tag width={16} height={16} color="#5e72e4" />
@@ -185,7 +241,7 @@ const ProductTrackingScreen = () => {
           <Text style={styles.productDetail}>{item.size}</Text>
         </View>
       </View>
-      
+
       <ItemJourney steps={item.journey} />
     </View>
   )
@@ -205,7 +261,7 @@ const ProductTrackingScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar translucent barStyle="light-content" backgroundColor="transparent" />
-      
+
       <LinearGradient
         colors={['#5e72e4', '#324cdd']}
         start={{ x: 0, y: 0 }}
@@ -213,8 +269,8 @@ const ProductTrackingScreen = () => {
         style={styles.headerGradient}
       >
         <View style={styles.headerContent}>
-          <TouchableOpacity 
-            style={styles.backButton} 
+          <TouchableOpacity
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <ArrowLeft width={24} height={24} color="white" />
@@ -224,37 +280,54 @@ const ProductTrackingScreen = () => {
             <Text style={styles.headerSubtitle}>Barcha mahsulotlar holati</Text>
           </View>
         </View>
-        
-        <View style={styles.searchContainer}>
-          <View style={styles.searchInputContainer}>
-            <Search width={20} height={20} color="#8898aa" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Qidirish..."
-              placeholderTextColor="#8898aa"
-              value={searchQuery}
-              onChangeText={handleSearch}
-            />
-          </View>
-        </View>
       </LinearGradient>
+      
+      <View style={styles.searchContainer}>
+        <View style={styles.searchInputContainer}>
+          <Search width={20} height={20} color="#8898aa" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Qidirish..."
+            value={searchQuery}
+            onChangeText={handleSearch}
+            placeholderTextColor="#8898aa"
+          />
+        </View>
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={handlePresentFilterSheet}
+          activeOpacity={0.7}
+        >
+          <Filter width={18} height={18} color="white" />
+          <Text style={styles.filterButtonText}>Filter</Text>
+        </TouchableOpacity>
+      </View>
 
       <FlatList
         data={products}
         renderItem={renderProductItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
-        style={{paddingTop: 20}}
+        style={{ paddingTop: 20 }}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={onRefresh} 
-            colors={["#5e72e4"]} 
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#5e72e4"]}
             tintColor="#5e72e4"
             progressBackgroundColor="#ffffff"
           />
         }
         showsVerticalScrollIndicator={false}
+      />
+      
+      {/* Filter Bottom Sheet */}
+      <FilterBottomSheet
+        ref={bottomSheetRef}
+        filterOptions={filterOptions}
+        initialValues={initialFilterValues}
+        onApply={handleApplyFilter}
+        onReset={handleResetFilter}
       />
     </View>
   )
@@ -267,7 +340,7 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     paddingTop: Platform.OS === 'ios' ? 60 : 50,
-    paddingBottom: 30,
+    paddingBottom: 15,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
@@ -297,9 +370,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
+    paddingTop: 10
   },
   searchInputContainer: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "white",
@@ -389,6 +466,25 @@ const styles = StyleSheet.create({
   productDetail: {
     fontSize: 14,
     color: "#32325d",
+  },
+  filterButton: {
+    backgroundColor: "#5e72e4",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginLeft: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  filterButtonText: {
+    color: "white",
+    fontWeight: "600",
+    marginLeft: 6,
   },
 })
 

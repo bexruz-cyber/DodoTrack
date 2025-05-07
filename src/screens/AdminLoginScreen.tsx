@@ -37,7 +37,7 @@ const AdminLoginScreen = () => {
   
     setIsLoading(true)
     try {
-      const success = await login(username, password, true) // true for admin login
+      const success = await login(username.trim(), password.trim(), true) // true for admin login
       if (!success) {
         showToast({
           type: "error",

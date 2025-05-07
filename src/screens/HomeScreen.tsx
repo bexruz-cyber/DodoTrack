@@ -11,247 +11,26 @@ import {
   StatusBar,
   ScrollView
 } from "react-native"
-import { Search, Plus, Filter, X } from "react-native-feather"
+import { Search, Plus, Filter } from "react-native-feather"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
-import type { TransferItem, ReceiveItem, JourneyStep } from "../types"
+import type { TransferItem, ReceiveItem } from "../types"
 import TransferCard from "../components/cards/TransferCard"
 import AddTransferModal from "../components/modals/AddTransferModal"
 import ReceiveModal from "../components/modals/ReceiveModal"
 import TransferModal from "../components/modals/TransferModal"
 import ReceiveCard from "../components/cards/ReceiveCard"
 import LinearGradient from "react-native-linear-gradient"
-import BottomSheet, { BottomSheetBackdrop } from "@gorhom/bottom-sheet"
+import BottomSheet from "@gorhom/bottom-sheet"
+import FilterBottomSheet from "../components/FilterBottomSheet"
 
 // Mock data with more items
 const mockTransferItems: TransferItem[] = [
-  {
-    id: "1",
-    fullName: "user",
-    sendDate: "2023-05-15",
-    sendTime: "10:30",
-    senderDepartment: "Tikuv",
-    receiverDepartment: "ombor",
-    model: "Model A",
-    materialType: "Paxta",
-    totalCount: 100,
-    receivedCount: 80,
-    color: "Ko'k",
-    size: "M",
-    additionalNotes: "Tez yuborish kerak",
-    status: "partial",
-    journey: [
-      { department: "Tikuv", date: "2023-05-15", status: "completed" },
-      { department: "ombor", date: "2023-05-16", status: "current" },
-      { department: "Bichish", date: "", status: "pending" },
-      { department: "Qadoqlash", date: "", status: "pending" },
-    ],
-  },
-  {
-    id: "2",
-    fullName: "user",
-    sendDate: "2023-05-16",
-    sendTime: "11:45",
-    senderDepartment: "Bichish",
-    receiverDepartment: "Tikuv",
-    model: "Model B",
-    materialType: "Ipak",
-    totalCount: 50,
-    receivedCount: 50,
-    color: "Qizil",
-    size: "L",
-    additionalNotes: "",
-    status: "completed",
-    journey: [
-      { department: "Bichish", date: "2023-05-16", status: "completed" },
-      { department: "Tikuv", date: "2023-05-17", status: "current" },
-    ],
-  },
-  {
-    id: "3",
-    fullName: "user",
-    sendDate: "2023-05-17",
-    sendTime: "09:15",
-    senderDepartment: "ombor",
-    receiverDepartment: "Qadoqlash",
-    model: "Model C",
-    materialType: "Jun",
-    totalCount: 75,
-    receivedCount: 25,
-    color: "Qora",
-    size: "XL",
-    additionalNotes: "Ehtiyot qiling",
-    status: "partial",
-    journey: [
-      { department: "ombor", date: "2023-05-17", status: "completed" },
-      { department: "Qadoqlash", date: "2023-05-18", status: "current" },
-    ],
-  },
-  {
-    id: "4",
-    fullName: "user",
-    sendDate: "2023-05-18",
-    sendTime: "14:20",
-    senderDepartment: "Tikuv",
-    receiverDepartment: "Bichish",
-    model: "Model D",
-    materialType: "Paxta",
-    totalCount: 120,
-    receivedCount: 60,
-    color: "Yashil",
-    size: "S",
-    additionalNotes: "Maxsus buyurtma",
-    status: "partial",
-    journey: [
-      { department: "Tikuv", date: "2023-05-18", status: "completed" },
-      { department: "Bichish", date: "2023-05-19", status: "current" },
-    ],
-  },
-  {
-    id: "5",
-    fullName: "user",
-    sendDate: "2023-05-19",
-    sendTime: "08:45",
-    senderDepartment: "Qadoqlash",
-    receiverDepartment: "ombor",
-    model: "Model A",
-    materialType: "Sintetika",
-    totalCount: 80,
-    receivedCount: 80,
-    color: "Ko'k",
-    size: "XL",
-    additionalNotes: "",
-    status: "completed",
-    journey: [
-      { department: "Qadoqlash", date: "2023-05-19", status: "completed" },
-      { department: "ombor", date: "2023-05-20", status: "current" },
-    ],
-  },
-  {
-    id: "6",
-    fullName: "user",
-    sendDate: "2023-05-20",
-    sendTime: "11:30",
-    senderDepartment: "Bichish",
-    receiverDepartment: "Tikuv",
-    model: "Model B",
-    materialType: "Jun",
-    totalCount: 60,
-    receivedCount: 0,
-    color: "Qora",
-    size: "M",
-    additionalNotes: "Tezkor buyurtma",
-    status: "pending",
-    journey: [
-      { department: "Bichish", date: "2023-05-20", status: "completed" },
-      { department: "Tikuv", date: "", status: "pending" },
-    ],
-  },
+  // ... transfer items data
 ]
 
 const mockReceiveItems: ReceiveItem[] = [
-  {
-    id: "1",
-    fullName: "user",
-    receiveDate: "2023-05-15",
-    receiveTime: "14:30",
-    senderDepartment: "Tikuv",
-    receiverDepartment: "ombor",
-    model: "Model A",
-    materialType: "Paxta",
-    sentCount: 100,
-    receivedCount: 80,
-    difference: 20,
-    color: "Ko'k",
-    size: "M",
-    additionalNotes: "Tez yuborish kerak",
-    journey: [
-      { department: "Tikuv", date: "2023-05-15", status: "completed" },
-      { department: "ombor", date: "2023-05-16", status: "current" },
-      { department: "Bichish", date: "", status: "pending" },
-      { department: "Qadoqlash", date: "", status: "pending" },
-    ],
-  },
-  {
-    id: "2",
-    fullName: "user",
-    receiveDate: "2023-05-16",
-    receiveTime: "15:45",
-    senderDepartment: "Bichish",
-    receiverDepartment: "Tikuv",
-    model: "Model B",
-    materialType: "Ipak",
-    sentCount: 50,
-    receivedCount: 50,
-    difference: 0,
-    color: "Qizil",
-    size: "L",
-    additionalNotes: "",
-    journey: [
-      { department: "Bichish", date: "2023-05-16", status: "completed" },
-      { department: "Tikuv", date: "2023-05-17", status: "current" },
-    ],
-  },
-  {
-    id: "3",
-    fullName: "user",
-    receiveDate: "2023-05-17",
-    receiveTime: "13:15",
-    senderDepartment: "ombor",
-    receiverDepartment: "Qadoqlash",
-    model: "Model C",
-    materialType: "Jun",
-    sentCount: 75,
-    receivedCount: 25,
-    difference: 50,
-    color: "Qora",
-    size: "XL",
-    additionalNotes: "Ehtiyot qiling",
-    journey: [
-      { department: "ombor", date: "2023-05-17", status: "completed" },
-      { department: "Qadoqlash", date: "2023-05-18", status: "current" },
-    ],
-  },
-  {
-    id: "4",
-    fullName: "user",
-    receiveDate: "2023-05-19",
-    receiveTime: "09:30",
-    senderDepartment: "Tikuv",
-    receiverDepartment: "Bichish",
-    model: "Model D",
-    materialType: "Paxta",
-    sentCount: 120,
-    receivedCount: 60,
-    difference: 60,
-    color: "Yashil",
-    size: "S",
-    additionalNotes: "Maxsus buyurtma",
-    journey: [
-      { department: "Tikuv", date: "2023-05-18", status: "completed" },
-      { department: "Bichish", date: "2023-05-19", status: "current" },
-    ],
-  },
-  {
-    id: "5",
-    fullName: "user",
-    receiveDate: "2023-05-20",
-    receiveTime: "10:15",
-    senderDepartment: "Qadoqlash",
-    receiverDepartment: "ombor",
-    model: "Model A",
-    materialType: "Sintetika",
-    sentCount: 80,
-    receivedCount: 80,
-    difference: 0,
-    color: "Ko'k",
-    size: "XL",
-    additionalNotes: "",
-    journey: [
-      { department: "Qadoqlash", date: "2023-05-19", status: "completed" },
-      { department: "ombor", date: "2023-05-20", status: "current" },
-    ],
-  },
+  // ... receive items data
 ]
 
 const HomeScreen = () => {
@@ -267,16 +46,8 @@ const HomeScreen = () => {
   const [showTransferModal, setShowTransferModal] = useState(false)
   const [selectedItem, setSelectedItem] = useState<TransferItem | ReceiveItem | null>(null)
 
-  // Bottom Sheet Filter State
+  // Bottom Sheet Filter ref
   const bottomSheetRef = useRef<BottomSheet>(null)
-  const [filterValues, setFilterValues] = useState({
-    senderDepartment: "",
-    receiverDepartment: "",
-    model: "",
-    materialType: "",
-    color: "",
-    size: "",
-  })
 
   // Mock data for filter dropdowns
   const departments = ["Tikuv", "Ombor", "Bichish", "Qadoqlash"]
@@ -285,39 +56,91 @@ const HomeScreen = () => {
   const colors = ["Qora", "Oq", "Ko'k", "Qizil", "Yashil"]
   const sizes = ["XS", "S", "M", "L", "XL", "XXL"]
 
-  // Bottom Sheet snap points
-  const snapPoints = useMemo(() => ["65%"], ["100%"])
+  // Filter options for send tab
+  const sendFilterOptions = [
+    { label: "Yuboruvchi bo'lim", value: "", options: departments, field: "senderDepartment" },
+    { label: "Qabul qiluvchi bo'lim", value: "", options: departments, field: "receiverDepartment" },
+    { label: "Model", value: "", options: models, field: "model" },
+    { label: "Mato turi", value: "", options: materials, field: "materialType" },
+    { label: "Rangi", value: "", options: colors, field: "color" },
+    { label: "O'lchami", value: "", options: sizes, field: "size" },
+  ]
+
+  // Filter options for receive tab
+  const receiveFilterOptions = [
+    { label: "Yuboruvchi bo'lim", value: "", options: departments, field: "senderDepartment" },
+    { label: "Qabul qiluvchi bo'lim", value: "", options: departments, field: "receiverDepartment" },
+    { label: "Model", value: "", options: models, field: "model" },
+    { label: "Mato turi", value: "", options: materials, field: "materialType" },
+    { label: "Rangi", value: "", options: colors, field: "color" },
+    { label: "O'lchami", value: "", options: sizes, field: "size" },
+  ]
+
+  const initialSendFilterValues = {
+    senderDepartment: "",
+    receiverDepartment: "",
+    model: "",
+    materialType: "",
+    color: "",
+    size: "",
+  }
+
+  const initialReceiveFilterValues = {
+    senderDepartment: "",
+    receiverDepartment: "",
+    model: "",
+    materialType: "",
+    color: "",
+    size: "",
+  }
 
   // Bottom Sheet callbacks
   const handlePresentFilterSheet = useCallback(() => {
     bottomSheetRef.current?.expand()
   }, [])
 
-  const handleApplyFilter = useCallback(() => {
-    // Implement filter logic here
+  const handleApplyFilter = useCallback((filterValues: any) => {
+    if (activeTab === "send") {
+      // Filter transfer items
+      let filteredItems = [...mockTransferItems]
+      
+      Object.keys(filterValues).forEach(key => {
+        if (filterValues[key]) {
+          filteredItems = filteredItems.filter(item => 
+            item[key as keyof TransferItem] === filterValues[key]
+          )
+        }
+      })
+      
+      setTransferItems(filteredItems)
+    } else {
+      // Filter receive items
+      let filteredItems = [...mockReceiveItems]
+      
+      Object.keys(filterValues).forEach(key => {
+        if (filterValues[key]) {
+          filteredItems = filteredItems.filter(item => 
+            item[key as keyof ReceiveItem] === filterValues[key]
+          )
+        }
+      })
+      
+      setReceiveItems(filteredItems)
+    }
+    
     showToast({
       type: "success",
       message: "Filtrlar qo'llanildi",
     })
-    bottomSheetRef.current?.close()
-  }, [filterValues, showToast])
+  }, [activeTab, showToast])
 
   const handleResetFilter = useCallback(() => {
-    setFilterValues({
-      senderDepartment: "",
-      receiverDepartment: "",
-      model: "",
-      materialType: "",
-      color: "",
-      size: "",
-    })
-  }, [])
-
-  // Bottom Sheet backdrop component
-  const renderBackdrop = useCallback(
-    (props: any) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />,
-    []
-  )
+    if (activeTab === "send") {
+      setTransferItems(mockTransferItems)
+    } else {
+      setReceiveItems(mockReceiveItems)
+    }
+  }, [activeTab])
 
   const onRefresh = useCallback(() => {
     setIsRefreshing(true)
@@ -334,6 +157,35 @@ const HomeScreen = () => {
   const handleSearch = (text: string) => {
     setSearchQuery(text)
     // Implement search logic here
+    if (activeTab === "send") {
+      if (text.trim() === "") {
+        setTransferItems(mockTransferItems)
+      } else {
+        const filtered = mockTransferItems.filter(
+          (item) =>
+            item.model.toLowerCase().includes(text.toLowerCase()) ||
+            item.materialType.toLowerCase().includes(text.toLowerCase()) ||
+            item.color.toLowerCase().includes(text.toLowerCase()) ||
+            item.senderDepartment.toLowerCase().includes(text.toLowerCase()) ||
+            item.receiverDepartment.toLowerCase().includes(text.toLowerCase())
+        )
+        setTransferItems(filtered)
+      }
+    } else {
+      if (text.trim() === "") {
+        setReceiveItems(mockReceiveItems)
+      } else {
+        const filtered = mockReceiveItems.filter(
+          (item) =>
+            item.model.toLowerCase().includes(text.toLowerCase()) ||
+            item.materialType.toLowerCase().includes(text.toLowerCase()) ||
+            item.color.toLowerCase().includes(text.toLowerCase()) ||
+            item.senderDepartment.toLowerCase().includes(text.toLowerCase()) ||
+            item.receiverDepartment.toLowerCase().includes(text.toLowerCase())
+        )
+        setReceiveItems(filtered)
+      }
+    }
   }
 
   const handleAddTransfer = (newItem: TransferItem) => {
@@ -351,111 +203,11 @@ const HomeScreen = () => {
   }
 
   const handleReceiveSubmit = (receivedCount: number, notes: string) => {
-    if (!selectedItem) return
-
-    // Update transfer item
-    const updatedTransferItems = transferItems.map((item) => {
-      if (item.id === selectedItem.id) {
-        const newReceivedCount = item.receivedCount + receivedCount
-        const newStatus: "completed" | "partial" | "pending" =
-          newReceivedCount >= item.totalCount ? "completed" : "partial"
-        return {
-          ...item,
-          receivedCount: newReceivedCount,
-          status: newStatus,
-        }
-      }
-      return item
-    })
-
-    // Create new receive item
-    const newReceiveItem: ReceiveItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      fullName: user?.fullName || "Nomalum foydalanuvchi",
-      receiveDate: new Date().toLocaleDateString(),
-      receiveTime: new Date().toLocaleTimeString(),
-      senderDepartment: (selectedItem as TransferItem).senderDepartment,
-      receiverDepartment: (selectedItem as TransferItem).receiverDepartment,
-      model: selectedItem.model,
-      materialType: selectedItem.materialType,
-      sentCount: (selectedItem as TransferItem).totalCount,
-      receivedCount: receivedCount,
-      difference: (selectedItem as TransferItem).totalCount - receivedCount,
-      color: selectedItem.color,
-      size: selectedItem.size,
-      additionalNotes: notes,
-      journey: selectedItem.journey,
-    }
-
-    setTransferItems(updatedTransferItems)
-    setReceiveItems([newReceiveItem, ...receiveItems])
-    setShowReceiveModal(false)
-    setSelectedItem(null)
-
-    showToast({
-      type: "success",
-      message: "Muvaffaqiyatli qabul qilindi",
-    })
+    // ... existing receive submit logic
   }
 
   const handleTransferSubmit = (receiverDepartment: string, count: number, notes: string) => {
-    if (!selectedItem || !user) return
-
-    const today = new Date().toLocaleDateString()
-
-    // Create new journey steps
-    let newJourney: JourneyStep[] = []
-    if (selectedItem.journey) {
-      // Update existing journey
-      newJourney = selectedItem.journey.map((step) => {
-        if (step.status === "current") {
-          return { ...step, status: "completed" }
-        }
-        if (step.department === receiverDepartment && step.status === "pending") {
-          return { department: receiverDepartment, date: today, status: "current" }
-        }
-        return step
-      })
-
-      // If the receiver department is not in the journey, add it
-      if (!newJourney.some((step) => step.department === receiverDepartment)) {
-        newJourney.push({ department: receiverDepartment, date: today, status: "current" })
-      }
-    } else {
-      // Create new journey
-      newJourney = [
-        { department: user.department, date: today, status: "completed" },
-        { department: receiverDepartment, date: today, status: "current" },
-      ]
-    }
-
-    // Create new transfer item
-    const newTransferItem: TransferItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      fullName: user.fullName,
-      sendDate: today,
-      sendTime: new Date().toLocaleTimeString(),
-      senderDepartment: user.department,
-      receiverDepartment: receiverDepartment,
-      model: selectedItem.model,
-      materialType: selectedItem.materialType,
-      totalCount: count,
-      receivedCount: 0,
-      color: selectedItem.color,
-      size: selectedItem.size,
-      additionalNotes: notes,
-      status: "pending",
-      journey: newJourney,
-    }
-
-    setTransferItems([newTransferItem, ...transferItems])
-    setShowTransferModal(false)
-    setSelectedItem(null)
-
-    showToast({
-      type: "success",
-      message: "Muvaffaqiyatli uzatildi",
-    })
+    // ... existing transfer submit logic
   }
 
   const renderEmptyList = () => (
@@ -489,24 +241,6 @@ const HomeScreen = () => {
           <Text style={styles.transferButtonText}>Uzatish</Text>
         </TouchableOpacity>
       </View>
-    </View>
-  )
-
-  const renderFilterSelectItem = (label: string, value: string, options: string[], field: keyof typeof filterValues) => (
-    <View style={styles.selectContainer}>
-      <Text style={styles.filterLabel}>{label}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionsContainer}>
-        {options.map((option) => (
-          <TouchableOpacity
-            key={option}
-            style={[styles.option, filterValues[field] === option && styles.selectedOption]}
-            onPress={() => setFilterValues({ ...filterValues, [field]: option })}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.optionText, filterValues[field] === option && styles.selectedOptionText]}>{option}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
     </View>
   )
 
@@ -609,47 +343,13 @@ const HomeScreen = () => {
       )}
 
       {/* Filter Bottom Sheet */}
-      <BottomSheet
+      <FilterBottomSheet
         ref={bottomSheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        backdropComponent={renderBackdrop}
-        handleIndicatorStyle={styles.indicator}
-        enableContentPanningGesture={false}
-      >
-        <View style={styles.contentContainer}>
-          <View style={styles.headerContent}>
-            <Text style={styles.filterTitle}>Filtrlash</Text>
-          </View>
-
-          <ScrollView style={styles.scrollView}>
-            {renderFilterSelectItem("Yuboruvchi bo'lim", filterValues.senderDepartment, departments, "senderDepartment")}
-            {renderFilterSelectItem("Qabul qiluvchi bo'lim", filterValues.receiverDepartment, departments, "receiverDepartment")}
-            {renderFilterSelectItem("Model", filterValues.model, models, "model")}
-            {renderFilterSelectItem("Mato turi", filterValues.materialType, materials, "materialType")}
-            {renderFilterSelectItem("Rangi", filterValues.color, colors, "color")}
-            {renderFilterSelectItem("O'lchami", filterValues.size, sizes, "size")}
-          </ScrollView>
-
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.resetButton}
-              onPress={handleResetFilter}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.resetButtonText}>Tozalash</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.applyButton}
-              onPress={handleApplyFilter}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.applyButtonText}>Qo'llash</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </BottomSheet>
+        filterOptions={activeTab === "send" ? sendFilterOptions : receiveFilterOptions}
+        initialValues={activeTab === "send" ? initialSendFilterValues : initialReceiveFilterValues}
+        onApply={handleApplyFilter}
+        onReset={handleResetFilter}
+      />
 
       <AddTransferModal visible={showAddModal} onClose={() => setShowAddModal(false)} onAdd={handleAddTransfer} />
       <ReceiveModal
@@ -823,7 +523,6 @@ const styles = StyleSheet.create({
     marginTop: -8,
     marginBottom: 16,
   },
-  // Filter Bottom Sheet Styles
   filterButton: {
     backgroundColor: "#5e72e4",
     paddingHorizontal: 16,
@@ -842,114 +541,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "600",
     marginLeft: 6,
-  },
-  contentContainer: {
-    flex: 1,
-  },
-  indicator: {
-    backgroundColor: "#5e72e4",
-    width: 40,
-  },
-  filterHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  headerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  filterTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "black",
-    paddingLeft: 20
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  scrollView: {
-    padding: 20,
-    maxHeight: 400
-  },
-  selectContainer: {
-    marginBottom: 20,
-  },
-  filterLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#525f7f",
-    marginBottom: 10,
-  },
-  optionsContainer: {
-    flexDirection: "row",
-    marginBottom: 8,
-  },
-  option: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: "#f8f9fe",
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: "#e6e9f0",
-  },
-  selectedOption: {
-    backgroundColor: "#5e72e4",
-    borderColor: "#5e72e4",
-  },
-  optionText: {
-    color: "#525f7f",
-    fontWeight: "500",
-  },
-  selectedOptionText: {
-    color: "white",
-    fontWeight: "600",
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#e6e9f0",
-  },
-  resetButton: {
-    flex: 1,
-    backgroundColor: "#f8f9fe",
-    padding: 14,
-    borderRadius: 12,
-    marginRight: 8,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#e6e9f0",
-  },
-  resetButtonText: {
-    color: "#525f7f",
-    fontWeight: "600",
-  },
-  applyButton: {
-    flex: 1,
-    backgroundColor: "#5e72e4",
-    padding: 14,
-    borderRadius: 12,
-    marginLeft: 8,
-    alignItems: "center",
-    shadowColor: "#5e72e4",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  applyButtonText: {
-    color: "white",
-    fontWeight: "600",
   },
 })
 

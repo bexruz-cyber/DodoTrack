@@ -82,6 +82,7 @@ const TabNavigator = () => {
   return (
     <Tab.Navigator
       initialRouteName="HomeTab"
+      
       screenOptions={{
         tabBarStyle: {
           ...styles.tabBar,
@@ -115,9 +116,11 @@ const TabNavigator = () => {
         }}
       />
 
+
+
       <Tab.Screen
         name="HomeTab"
-        component={HomeScreen}
+        component={user?.role =="admin" ? DepartmentStatsScreen : HomeScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
             <TabIcon color={color} size={26} icon={Home} focused={focused} isHome={true} />

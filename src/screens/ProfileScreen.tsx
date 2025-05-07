@@ -13,7 +13,8 @@ import {
 } from "react-native"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
-import { LogOut, User, Briefcase, Mail, Calendar, Shield, Activity, Package, Clock, CheckCircle } from "react-native-feather"
+import { LogOut, User, Activity, Package, Clock, CheckCircle, Users, Briefcase, Type, Tag } from "react-native-feather"
+
 import LinearGradient from "react-native-linear-gradient"
 
 const { width } = Dimensions.get("window")
@@ -123,43 +124,82 @@ const ProfileScreen = () => {
             </View>
           </View>
 
-          <Text style={styles.sectionTitle}>Statistika</Text>
 
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <View style={[styles.statIconContainer, { backgroundColor: 'rgba(94, 114, 228, 0.1)' }]}>
-                <Package width={20} height={20} color="#5e72e4" />
+          {user?.role == "user" ?
+            <>
+              <Text style={styles.sectionTitle}>Statistika</Text>
+              <View style={styles.statsGrid}>
+                <View style={styles.statCard}>
+                  <View style={[styles.statIconContainer, { backgroundColor: 'rgba(94, 114, 228, 0.1)' }]}>
+                    <Package width={20} height={20} color="#5e72e4" />
+                  </View>
+                  <Text style={styles.statValue}>{statistics.sent}</Text>
+                  <Text style={styles.statLabel}>Yuborilgan</Text>
+                </View>
+
+                <View style={styles.statCard}>
+                  <View style={[styles.statIconContainer, { backgroundColor: 'rgba(45, 206, 137, 0.1)' }]}>
+                    <Activity width={20} height={20} color="#2dce89" />
+                  </View>
+                  <Text style={[styles.statValue, { color: '#2dce89' }]}>{statistics.received}</Text>
+                  <Text style={styles.statLabel}>Qabul qilingan</Text>
+                </View>
+
+                <View style={styles.statCard}>
+                  <View style={[styles.statIconContainer, { backgroundColor: 'rgba(251, 99, 64, 0.1)' }]}>
+                    <Clock width={20} height={20} color="#fb6340" />
+                  </View>
+                  <Text style={[styles.statValue, { color: '#fb6340' }]}>{statistics.pending}</Text>
+                  <Text style={styles.statLabel}>Kutilmoqda</Text>
+                </View>
+
+                <View style={styles.statCard}>
+                  <View style={[styles.statIconContainer, { backgroundColor: 'rgba(17, 205, 239, 0.1)' }]}>
+                    <CheckCircle width={20} height={20} color="#11cdef" />
+                  </View>
+                  <Text style={[styles.statValue, { color: '#11cdef' }]}>{statistics.completed}</Text>
+                  <Text style={styles.statLabel}>Yakunlangan</Text>
+                </View>
               </View>
-              <Text style={styles.statValue}>{statistics.sent}</Text>
-              <Text style={styles.statLabel}>Yuborilgan</Text>
-            </View>
+            </>
+            :
+            <>
+              <Text style={styles.sectionTitle}>Statistika</Text>
+              <View style={styles.statsGrid}>
+                <View style={styles.statCard}>
+                  <View style={[styles.statIconContainer, { backgroundColor: 'rgba(94, 114, 228, 0.1)' }]}>
+                    <Package width={20} height={20} color="#5e72e4" />
+                  </View>
+                  <Text style={styles.statValue}>5</Text>
+                  <Text style={styles.statLabel}>Bo'limlar</Text>
+                </View>
 
-            <View style={styles.statCard}>
-              <View style={[styles.statIconContainer, { backgroundColor: 'rgba(45, 206, 137, 0.1)' }]}>
-                <Activity width={20} height={20} color="#2dce89" />
+                <View style={styles.statCard}>
+                  <View style={[styles.statIconContainer, { backgroundColor: 'rgba(45, 206, 137, 0.1)' }]}>
+                    <Users width={20} height={20} color="#2dce89" />
+                  </View>
+                  <Text style={[styles.statValue, { color: '#2dce89' }]}>10</Text>
+                  <Text style={styles.statLabel}>Hodimlar</Text>
+                </View>
+
+                <View style={styles.statCard}>
+                  <View style={[styles.statIconContainer, { backgroundColor: 'rgba(251, 99, 64, 0.1)' }]}>
+                    <Type width={20} height={20} color="#fb6340" />
+                  </View>
+                  <Text style={[styles.statValue, { color: '#fb6340' }]}>15</Text>
+                  <Text style={styles.statLabel}>Ranglar</Text>
+                </View>
+
+                <View style={styles.statCard}>
+                  <View style={[styles.statIconContainer, { backgroundColor: 'rgba(17, 205, 239, 0.1)' }]}>
+                    <Tag width={20} height={20} color="#11cdef" />
+                  </View>
+                  <Text style={[styles.statValue, { color: '#11cdef' }]}>17</Text>
+                  <Text style={styles.statLabel}>O'lchamlar</Text>
+                </View>
               </View>
-              <Text style={[styles.statValue, { color: '#2dce89' }]}>{statistics.received}</Text>
-              <Text style={styles.statLabel}>Qabul qilingan</Text>
-            </View>
-
-            <View style={styles.statCard}>
-              <View style={[styles.statIconContainer, { backgroundColor: 'rgba(251, 99, 64, 0.1)' }]}>
-                <Clock width={20} height={20} color="#fb6340" />
-              </View>
-              <Text style={[styles.statValue, { color: '#fb6340' }]}>{statistics.pending}</Text>
-              <Text style={styles.statLabel}>Kutilmoqda</Text>
-            </View>
-
-            <View style={styles.statCard}>
-              <View style={[styles.statIconContainer, { backgroundColor: 'rgba(17, 205, 239, 0.1)' }]}>
-                <CheckCircle width={20} height={20} color="#11cdef" />
-              </View>
-              <Text style={[styles.statValue, { color: '#11cdef' }]}>{statistics.completed}</Text>
-              <Text style={styles.statLabel}>Yakunlangan</Text>
-            </View>
-          </View>
-
-       
+            </>
+          }
         </View>
       </ScrollView>
     </View>

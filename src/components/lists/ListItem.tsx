@@ -1,12 +1,12 @@
-import React from "react"
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native"
-import { Edit2, Trash2 } from "react-native-feather"
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Edit2, Trash2 } from "react-native-feather";
 
 interface ListItemProps {
-  title: string
-  subtitle?: string
-  onEdit: () => void
-  onDelete: () => void
+  title: string;
+  subtitle?: string;
+  onEdit: (id: string) => void; // Updated to accept id
+  onDelete: (id: string) => void; // Updated to accept id
 }
 
 const ListItem = ({ title, subtitle, onEdit, onDelete }: ListItemProps) => {
@@ -23,24 +23,24 @@ const ListItem = ({ title, subtitle, onEdit, onDelete }: ListItemProps) => {
         )}
       </View>
       <View style={styles.listItemActions}>
-        <TouchableOpacity 
-          style={styles.editButton} 
-          onPress={onEdit}
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => onEdit(title)} // Pass an id (adjust based on your data)
           activeOpacity={0.7}
         >
           <Edit2 width={16} height={16} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.deleteButton} 
-          onPress={onDelete}
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => onDelete(title)} // Pass an id (adjust based on your data)
           activeOpacity={0.7}
         >
           <Trash2 width={16} height={16} color="white" />
         </TouchableOpacity>
       </View>
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   listItem: {

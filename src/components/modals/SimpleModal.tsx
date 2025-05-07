@@ -1,5 +1,5 @@
 import React from "react"
-import { View, Text, TouchableOpacity, TextInput, StyleSheet } from "react-native"
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from "react-native"
 import { X } from "react-native-feather"
 import LinearGradient from "react-native-linear-gradient"
 
@@ -16,6 +16,7 @@ interface SimpleModalProps {
   onSaveColor: () => void
   onSaveSize: () => void
   onClose: () => void
+  loading: boolean
 }
 
 const SimpleModal = ({
@@ -31,6 +32,7 @@ const SimpleModal = ({
   onSaveColor,
   onSaveSize,
   onClose,
+  loading,
 }: SimpleModalProps) => {
   let title = ""
   let placeholder = ""
@@ -92,6 +94,7 @@ const SimpleModal = ({
             style={styles.cancelButton} 
             onPress={onClose}
             activeOpacity={0.7}
+            disabled={loading}
           >
             <Text style={styles.cancelButtonText}>Bekor qilish</Text>
           </TouchableOpacity>
@@ -99,8 +102,13 @@ const SimpleModal = ({
             style={styles.saveButton} 
             onPress={onSave}
             activeOpacity={0.7}
+            disabled={loading}
           >
-            <Text style={styles.saveButtonText}>Saqlash</Text>
+            {loading ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <Text style={styles.saveButtonText}>Saqlash</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

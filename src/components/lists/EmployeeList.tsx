@@ -5,7 +5,11 @@ import ListItem from "./ListItem"
 interface Employee {
   id: string
   login: string
-  type: string
+  department: {
+    id: string,
+    name: string
+  }
+  departmentId: string
   createdAt: string
   updatedAt: string
 }
@@ -20,20 +24,11 @@ interface EmployeeListProps {
 }
 
 const EmployeeList = ({ employees, loading, refreshing, onRefresh, onEdit, onDelete }: EmployeeListProps) => {
-  if (loading && employees.length === 0) {
+  if (loading) {
     return (
       <View style={styles.loaderContainer}>
         <ActivityIndicator color="#5e72e4" size="large" />
         <Text style={styles.loaderText}>Ma'lumotlar yuklanmoqda...</Text>
-      </View>
-    )
-  }
-
-  if (employees.length === 0 && !loading) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Xodimlar mavjud emas</Text>
-        <Text style={styles.emptySubtext}>Yangi xodim qo'shish uchun + tugmasini bosing</Text>
       </View>
     )
   }
@@ -45,11 +40,17 @@ const EmployeeList = ({ employees, loading, refreshing, onRefresh, onEdit, onDel
       renderItem={({ item }) => (
         <ListItem
           title={item.login}
-          subtitle={item.type}
+          subtitle={item.department.name}
           onEdit={() => onEdit(item.id)}
           onDelete={() => onDelete(item.id)}
         />
       )}
+      ListEmptyComponent={
+        <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>Xodimlar mavjud emas</Text>
+        <Text style={styles.emptySubtext}>Yangi xodim qo'shish uchun + tugmasini bosing</Text>
+      </View>
+      }
       contentContainerStyle={styles.listContent}
       refreshControl={
         <RefreshControl 
@@ -68,11 +69,12 @@ const styles = StyleSheet.create({
   listContent: {
     flexGrow: 1,
     paddingBottom: 100,
+    paddingTop: 20
   },
   loaderContainer: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingTop: 30
   },
   loaderText: {
     marginTop: 12,
@@ -80,10 +82,10 @@ const styles = StyleSheet.create({
     color: "#8898aa",
   },
   emptyContainer: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+    paddingTop: 30,
   },
   emptyText: {
     fontSize: 18,

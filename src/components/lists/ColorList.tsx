@@ -2,17 +2,22 @@ import React from "react"
 import { FlatList, StyleSheet, RefreshControl, View, Text, ActivityIndicator } from "react-native"
 import ListItem from "./ListItem"
 
+interface Colors {
+  id: string,
+  name: string
+}
+
 interface ColorListProps {
-  colors: string[]
+  colors: Colors[]
   refreshing: boolean
   onRefresh: () => void
-  onEdit: (index: number) => void
-  onDelete: (index: number) => void
+  onEdit: (index: string) => void
+  onDelete: (index: string) => void
   loading?: boolean
 }
 
-const ColorList = ({ colors, refreshing, onRefresh, onEdit, onDelete, loading = false }: ColorListProps) => {
-  if (loading && colors.length === 0) {
+const ColorList = ({ colors, refreshing, onRefresh, onEdit, onDelete, loading }: ColorListProps) => {
+  if (loading) {
     return (
       <View style={styles.loaderContainer}>
         <ActivityIndicator color="#5e72e4" size="large" />
@@ -21,24 +26,22 @@ const ColorList = ({ colors, refreshing, onRefresh, onEdit, onDelete, loading = 
     )
   }
 
-  if (colors.length === 0 && !loading) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Ranglar mavjud emas</Text>
-        <Text style={styles.emptySubtext}>Yangi rang qo'shish uchun + tugmasini bosing</Text>
-      </View>
-    )
-  }
 
   return (
     <FlatList
       data={colors}
-      keyExtractor={(_, index) => index.toString()}
-      renderItem={({ item, index }) => (
+      keyExtractor={(item) => item.id.toString()}
+      ListEmptyComponent={
+        <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>Ranglar mavjud emas</Text>
+        <Text style={styles.emptySubtext}>Yangi rang qo'shish uchun + tugmasini bosing</Text>
+      </View>
+      }
+      renderItem={({ item }) => (
         <ListItem
-          title={item}
-          onEdit={() => onEdit(index)}
-          onDelete={() => onDelete(index)}
+          title={item.name}
+          onEdit={() => onEdit(item.id)}
+          onDelete={() => onDelete(item.id)}
         />
       )}
       contentContainerStyle={styles.listContent}
@@ -61,10 +64,8 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   loaderContainer: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8f9fe",
   },
   loaderText: {
     marginTop: 12,
@@ -72,11 +73,9 @@ const styles = StyleSheet.create({
     color: "#8898aa",
   },
   emptyContainer: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#f8f9fe",
   },
   emptyText: {
     fontSize: 18,

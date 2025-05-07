@@ -13,20 +13,25 @@ import {
 import { X } from "react-native-feather"
 import LinearGradient from "react-native-linear-gradient"
 
+interface Department {
+  id: string,
+  name: string
+}
+
 interface EmployeeModalProps {
   newEmployee: {
     login: string
     password: string
-    type: string
+    typeId: string
   }
   setNewEmployee: React.Dispatch<
     React.SetStateAction<{
       login: string
       password: string
-      type: string
+      typeId: string
     }>
   >
-  departments: string[]
+  departments: Department[]
   loading: boolean
   editingId: string | null
   onSave: () => void
@@ -42,6 +47,13 @@ const EmployeeModal = ({
   onSave,
   onClose,
 }: EmployeeModalProps) => {
+
+
+  console.log(newEmployee.typeId);
+  
+  
+
+
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalContainer}>
       <View style={styles.modalContent}>
@@ -85,13 +97,13 @@ const EmployeeModal = ({
           <View style={styles.optionsContainer}>
             {departments.map((dept) => (
               <TouchableOpacity
-                key={dept}
-                style={[styles.option, newEmployee.type === dept.toLowerCase() && styles.selectedOption]}
-                onPress={() => setNewEmployee({ ...newEmployee, type: dept.toLowerCase() })}
+                key={dept.id}
+                style={[styles.option, newEmployee.typeId === dept.id.toLowerCase() && styles.selectedOption]}
+                onPress={() => setNewEmployee({ ...newEmployee, typeId: dept.id.toLowerCase() })}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.optionText, newEmployee.type === dept.toLowerCase() && styles.selectedOptionText]}>
-                  {dept}
+                <Text style={[styles.optionText, newEmployee.typeId === dept.id.toLowerCase() && styles.selectedOptionText]}>
+                  {dept.name}
                 </Text>
               </TouchableOpacity>
             ))}

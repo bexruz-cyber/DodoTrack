@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef, useCallback } from "react"
 import {
   View,
   Text,
@@ -11,9 +11,11 @@ import {
   Platform
 } from "react-native"
 import { useToast } from "../context/ToastContext"
-import { Search, ArrowLeft, Users, Package, Activity } from "react-native-feather"
+import { Search, ArrowLeft, Users, Package, Activity, Filter, CheckCircle, XCircle } from "react-native-feather"
 import { useNavigation } from "@react-navigation/native"
 import LinearGradient from "react-native-linear-gradient"
+import BottomSheet from "@gorhom/bottom-sheet"
+import FilterBottomSheet from "../components/FilterBottomSheet"
 
 // Mock data for department statistics
 const departmentData = [
@@ -38,6 +40,29 @@ const DepartmentStatsScreen = () => {
   const [refreshing, setRefreshing] = useState(false)
   const [departments, setDepartments] = useState(departmentData)
 
+  // Bottom Sheet ref
+  const bottomSheetRef = useRef<BottomSheet>(null)
+
+  // Filter options
+  const efficiencyRanges = ["90% va yuqori", "80-90%", "70-80%", "70% dan past"]
+  const sentRanges = ["100+ dona", "50-100 dona", "20-50 dona", "20 donadan kam"]
+  const receivedRanges = ["100+ dona", "50-100 dona", "20-50 dona", "20 donadan kam"]
+
+  // Filter configuration
+  const filterOptions = [
+    { label: "Bo'lim nomi", value: "", options: departmentData.map(dept => dept.name), field: "name" },
+    { label: "Samaradorlik", value: "", options: efficiencyRanges, field: "efficiencyRange" },
+    { label: "Yuborilgan", value: "", options: sentRanges, field: "sentRange" },
+    { label: "Qabul qilingan", value: "", options: receivedRanges, field: "receivedRange" },
+  ]
+
+  const initialFilterValues = {
+    name: "",
+    efficiencyRange: "",
+    sentRange: "",
+    receivedRange: "",
+  }
+
   const onRefresh = () => {
     setRefreshing(true)
     // Simulate data fetching
@@ -59,6 +84,89 @@ const DepartmentStatsScreen = () => {
       setDepartments(filtered)
     }
   }
+
+  const handlePresentFilterSheet = useCallback(() => {
+    bottomSheetRef.current?.expand()
+  }, [])
+
+  const handleApplyFilter = useCallback((filterValues: any) => {
+    let filteredDepartments = [...departmentData]
+
+    // Filter by department name
+    if (filterValues.name) {
+      filteredDepartments = filteredDepartments.filter(dept =>
+        dept.name === filterValues.name
+      )
+    }
+
+    // Filter by efficiency range
+    if (filterValues.efficiencyRange) {
+      filteredDepartments = filteredDepartments.filter(dept => {
+        const efficiency = dept.efficiency
+        switch (filterValues.efficiencyRange) {
+          case "90% va yuqori":
+            return efficiency >= 90
+          case "80-90%":
+            return efficiency >= 80 && efficiency < 90
+          case "70-80%":
+            return efficiency >= 70 && efficiency < 80
+          case "70% dan past":
+            return efficiency < 70
+          default:
+            return true
+        }
+      })
+    }
+
+    // Filter by sent range
+    if (filterValues.sentRange) {
+      filteredDepartments = filteredDepartments.filter(dept => {
+        const sent = dept.sent
+        switch (filterValues.sentRange) {
+          case "100+ dona":
+            return sent > 100
+          case "50-100 dona":
+            return sent >= 50 && sent <= 100
+          case "20-50 dona":
+            return sent >= 20 && sent < 50
+          case "20 donadan kam":
+            return sent < 20
+          default:
+            return true
+        }
+      })
+    }
+
+    // Filter by received range
+    if (filterValues.receivedRange) {
+      filteredDepartments = filteredDepartments.filter(dept => {
+        const received = dept.received
+        switch (filterValues.receivedRange) {
+          case "100+ dona":
+            return received > 100
+          case "50-100 dona":
+            return received >= 50 && received <= 100
+          case "20-50 dona":
+            return received >= 20 && received < 50
+          case "20 donadan kam":
+            return received < 20
+          default:
+            return true
+        }
+      })
+    }
+
+    setDepartments(filteredDepartments)
+
+    showToast({
+      type: "success",
+      message: "Filtrlar qo'llanildi",
+    })
+  }, [showToast])
+
+  const handleResetFilter = useCallback(() => {
+    setDepartments(departmentData)
+  }, [])
 
   const renderDepartmentItem = ({ item }: { item: (typeof departmentData)[0] }) => (
     <View style={styles.departmentCard}>
@@ -87,7 +195,7 @@ const DepartmentStatsScreen = () => {
 
         <View style={styles.statItem}>
           <View style={[styles.statIconContainer, { backgroundColor: 'rgba(45, 206, 137, 0.1)' }]}>
-            <Activity width={16} height={16} color="#2dce89" />
+            <CheckCircle width={16} height={16} color="#2dce89" />
           </View>
           <Text style={[styles.statValue, { color: '#2dce89' }]}>{item.received}</Text>
           <Text style={styles.statLabel}>Qabul qilingan</Text>
@@ -95,7 +203,7 @@ const DepartmentStatsScreen = () => {
 
         <View style={styles.statItem}>
           <View style={[styles.statIconContainer, { backgroundColor: 'rgba(251, 99, 64, 0.1)' }]}>
-            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#fb6340' }}>Δ</Text>
+            <XCircle width={16} height={16} color="#fb6340" />
           </View>
           <Text style={[styles.statValue, { color: '#fb6340' }]}>{item.sent - item.received}</Text>
           <Text style={styles.statLabel}>Farq</Text>
@@ -147,24 +255,30 @@ const DepartmentStatsScreen = () => {
             <Text style={styles.headerSubtitle}>Barcha bo'limlar faoliyati</Text>
           </View>
         </View>
-
-        <View style={styles.searchContainer}>
-          <View style={styles.searchInputContainer}>
-            <Search width={20} height={20} color="#8898aa" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Bo'lim nomini qidirish..."
-              placeholderTextColor="#8898aa"
-              value={searchQuery}
-              onChangeText={handleSearch}
-            />
-          </View>
-        </View>
       </LinearGradient>
 
+      <View style={styles.searchContainer}>
+        <View style={styles.searchInputContainer}>
+          <Search width={20} height={20} color="#8898aa" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Bo'lim nomini qidirish..."
+            placeholderTextColor="#8898aa"
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+        </View>
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={handlePresentFilterSheet}
+          activeOpacity={0.7}
+        >
+          <Filter width={18} height={18} color="white" />
+          <Text style={styles.filterButtonText}>Filter</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.contentContainer}>
-
-
         <FlatList
           data={departments}
           renderItem={renderDepartmentItem}
@@ -176,7 +290,7 @@ const DepartmentStatsScreen = () => {
                 <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(94, 114, 228, 0.1)' }]}>
                   <Users width={20} height={20} color="#5e72e4" />
                 </View>
-                <Text style={styles.summaryValue}>{departmentData.length}</Text>
+                <Text style={styles.summaryValue}>{departments.length}</Text>
                 <Text style={styles.summaryLabel}>Jami bo'limlar</Text>
               </View>
 
@@ -185,17 +299,17 @@ const DepartmentStatsScreen = () => {
                   <Package width={20} height={20} color="#2dce89" />
                 </View>
                 <Text style={[styles.summaryValue, { color: '#2dce89' }]}>
-                  {departmentData.reduce((sum, dept) => sum + dept.sent, 0)}
+                  {departments.reduce((sum, dept) => sum + dept.sent, 0)}
                 </Text>
                 <Text style={styles.summaryLabel}>Jami yuborilgan</Text>
               </View>
 
               <View style={styles.summaryCard}>
                 <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(17, 205, 239, 0.1)' }]}>
-                  <Activity width={20} height={20} color="#11cdef" />
+                  <CheckCircle width={20} height={20} color="#11cdef" />
                 </View>
                 <Text style={[styles.summaryValue, { color: '#11cdef' }]}>
-                  {departmentData.reduce((sum, dept) => sum + dept.received, 0)}
+                  {departments.reduce((sum, dept) => sum + dept.received, 0)}
                 </Text>
                 <Text style={styles.summaryLabel}>Jami qabul</Text>
               </View>
@@ -213,6 +327,15 @@ const DepartmentStatsScreen = () => {
           showsVerticalScrollIndicator={false}
         />
       </View>
+
+      {/* Filter Bottom Sheet */}
+      <FilterBottomSheet
+        ref={bottomSheetRef}
+        filterOptions={filterOptions}
+        initialValues={initialFilterValues}
+        onApply={handleApplyFilter}
+        onReset={handleResetFilter}
+      />
     </View>
   )
 }
@@ -224,7 +347,7 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     paddingTop: Platform.OS === 'ios' ? 60 : 50,
-    paddingBottom: 30,
+    paddingBottom: 15,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     zIndex: 30
@@ -255,9 +378,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
+    paddingTop: 10
   },
   searchInputContainer: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "white",
@@ -279,15 +406,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#32325d",
   },
+  filterButton: {
+    backgroundColor: "#5e72e4",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginLeft: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  filterButtonText: {
+    color: "white",
+    fontWeight: "600",
+    marginLeft: 6,
+  },
   contentContainer: {
     flex: 1,
-    marginTop: -20,
+    marginTop: 10,
   },
   summaryContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingBottom: 16,
-    paddingTop: 40
+    paddingTop: 16
   },
   summaryCard: {
     backgroundColor: "white",

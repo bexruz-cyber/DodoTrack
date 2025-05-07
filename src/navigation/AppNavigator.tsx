@@ -18,7 +18,7 @@ export type RootStackParamList = {
   Main: undefined;
   ProductTracking: undefined;
   DepartmentStats: undefined;
-  DetailScreen: undefined
+  Detail: undefined
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
@@ -42,7 +42,7 @@ const AppNavigator = () => {
           <Stack.Screen name="Main" component={TabNavigator} />
           <Stack.Screen name="ProductTracking" component={ProductTrackingScreen} />
           <Stack.Screen name="DepartmentStats" component={DepartmentStatsScreen} />
-          <Stack.Screen name="DetailScreen" component={DetailScreen} />
+          <Stack.Screen name="Detail" component={DetailScreen} />
         </>
       ) : (
         <>

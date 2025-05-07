@@ -1,11 +1,11 @@
 import { useState } from "react"
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  Dimensions, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
   RefreshControl,
   Platform
 } from "react-native"
@@ -14,7 +14,16 @@ import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
 import ItemJourney from "../components/ItemJourney"
 import type { ProductTrackingItem } from "../types"
-import { ChevronRight, BarChart2, PieChart, Box, TrendingUp } from "react-native-feather"
+import { 
+  ChevronRight, 
+  Box, 
+  TrendingUp, 
+  Clock, 
+  CheckCircle,
+  AlertCircle,
+  AlertTriangle
+} from "react-native-feather"
+
 import LinearGradient from "react-native-linear-gradient"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { RootStackParamList } from "../navigation/AppNavigator"
@@ -32,12 +41,10 @@ const departmentData = [
 ]
 
 const statusData = [
-  { name: "Kutilmoqda", value: 25, color: "#f39c12" },
-  { name: "Qisman", value: 35, color: "#3498db" },
-  { name: "Yakunlangan", value: 40, color: "#2ecc71" },
+  { name: "Kutilmoqda", value: 25, color: "#f39c12", icon: Clock },
+  { name: "Qisman", value: 35, color: "#3498db", icon: AlertCircle },
+  { name: "Yakunlangan", value: 40, color: "#2ecc71", icon: CheckCircle },
 ]
-
-
 
 // Mock data for product tracking with more items
 const productTrackingData: ProductTrackingItem[] = [
@@ -147,31 +154,34 @@ const DashboardScreen = () => {
     }, 1500)
   }
 
-
-
   const renderPieChart = () => {
     const total = statusData.reduce((sum, item) => sum + item.value, 0)
 
     return (
       <View style={styles.pieChartContainer}>
         <View style={styles.pieChart}>
-          {statusData.map((item, index) => (
-            <View key={index} style={styles.pieSegmentContainer}>
-              <View
-                style={[
-                  styles.pieSegment,
-                  {
-                    backgroundColor: item.color,
-                    width: 50,
-                    height: 50,
-                    borderRadius: 25,
-                  },
-                ]}
-              />
-              <Text style={styles.pieSegmentValue}>{item.value}%</Text>
-              <Text style={styles.pieSegmentLabel}>{item.name}</Text>
-            </View>
-          ))}
+          {statusData.map((item, index) => {
+            const IconComponent = item.icon
+            return (
+              <View key={index} style={styles.pieSegmentContainer}>
+                <View
+                  style={[
+                    styles.pieSegment,
+                    {
+                      backgroundColor: item.color,
+                      width: 50,
+                      height: 50,
+                      borderRadius: 25,
+                    },
+                  ]}
+                >
+                  <IconComponent width={24} height={24} color="white" />
+                </View>
+                <Text style={styles.pieSegmentValue}>{item.value}%</Text>
+                <Text style={styles.pieSegmentLabel}>{item.name}</Text>
+              </View>
+            )
+          })}
         </View>
       </View>
     )
@@ -202,8 +212,8 @@ const DashboardScreen = () => {
           ))}
         </View>
 
-        <TouchableOpacity 
-          style={styles.viewAllButton} 
+        <TouchableOpacity
+          style={styles.viewAllButton}
           onPress={() => navigation.navigate("DepartmentStats")}
           activeOpacity={0.7}
         >
@@ -240,8 +250,8 @@ const DashboardScreen = () => {
           </View>
         ))}
 
-        <TouchableOpacity 
-          style={styles.viewAllButton} 
+        <TouchableOpacity
+          style={styles.viewAllButton}
           onPress={() => navigation.navigate("ProductTracking")}
           activeOpacity={0.7}
         >
@@ -253,7 +263,7 @@ const DashboardScreen = () => {
   }
 
   const getBadgeColor = (department: string) => {
-    const colors: {[key: string]: string} = {
+    const colors: { [key: string]: string } = {
       "Tikuv": "#5e72e4",
       "Ombor": "#11cdef",
       "Bichish": "#2dce89",
@@ -263,7 +273,7 @@ const DashboardScreen = () => {
       "Yuvish": "#f5365c",
       "Dazmollash": "#172b4d"
     };
-    
+
     return colors[department] || "#5e72e4";
   }
 
@@ -271,8 +281,8 @@ const DashboardScreen = () => {
     <View style={styles.container}>
       <LinearGradient
         colors={['#5e72e4', '#324cdd']}
-        start={{x: 0, y: 0}}
-        end={{x: 1, y: 1}}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={styles.header}
       >
         <Text style={styles.title}>Statistika</Text>
@@ -282,10 +292,10 @@ const DashboardScreen = () => {
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={onRefresh} 
-            colors={["#5e72e4"]} 
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#5e72e4"]}
             tintColor="#5e72e4"
             progressBackgroundColor="#ffffff"
           />
@@ -328,21 +338,21 @@ const DashboardScreen = () => {
           </View>
           <View style={styles.summaryCard}>
             <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(45, 206, 137, 0.1)' }]}>
-              <TrendingUp width={24} height={24} color="#2dce89" />
+              <CheckCircle width={24} height={24} color="#2dce89" />
             </View>
             <Text style={[styles.summaryValue, { color: '#2dce89' }]}>230</Text>
             <Text style={styles.summaryLabel}>Jami qabul qilingan</Text>
           </View>
           <View style={styles.summaryCard}>
             <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(251, 99, 64, 0.1)' }]}>
-              <BarChart2 width={24} height={24} color="#fb6340" />
+              <AlertTriangle width={24} height={24} color="#fb6340" />
             </View>
             <Text style={[styles.summaryValue, { color: '#fb6340' }]}>15</Text>
             <Text style={styles.summaryLabel}>Farq</Text>
           </View>
           <View style={styles.summaryCard}>
             <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(17, 205, 239, 0.1)' }]}>
-              <PieChart width={24} height={24} color="#11cdef" />
+              <TrendingUp width={24} height={24} color="#11cdef" />
             </View>
             <Text style={[styles.summaryValue, { color: '#11cdef' }]}>94%</Text>
             <Text style={styles.summaryLabel}>Samaradorlik</Text>
@@ -354,7 +364,7 @@ const DashboardScreen = () => {
           {renderPieChart()}
         </View>
 
-        <View style={styles.chartCard}>
+        {/* <View style={styles.chartCard}>
           <Text style={styles.chartTitle}>Bo'limlar bo'yicha</Text>
           {renderDepartmentStats()}
         </View>
@@ -362,8 +372,8 @@ const DashboardScreen = () => {
         <View style={styles.chartCard}>
           <Text style={styles.chartTitle}>Tovar haritasi</Text>
           {renderProductTracking()}
-        </View>
-        
+        </View> */}
+
         <View style={styles.bottomPadding} />
       </ScrollView>
     </View>
@@ -380,7 +390,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 20,
+    paddingBottom: 25,
     paddingHorizontal: 20,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
@@ -534,6 +544,8 @@ const styles = StyleSheet.create({
   },
   pieSegment: {
     marginBottom: 8,
+    alignItems: "center",
+    justifyContent: "center"
   },
   pieSegmentValue: {
     fontSize: 16,
