@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
@@ -63,14 +62,13 @@ const AdminLoginScreen = () => {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" translucent />
 
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <ArrowLeft width={24} height={24} color="#333" />
       </TouchableOpacity>
 
       <View style={styles.logoContainer}>
-        <Image source={{ uri: "https://cdn-icons-png.flaticon.com/512/2271/2271113.png" }} style={styles.logo} />
         <Text style={styles.title}>Admin kirish</Text>
         <Text style={styles.subtitle}>Tizimni boshqarish uchun admin hisobingizga kiring</Text>
       </View>

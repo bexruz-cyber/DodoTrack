@@ -33,7 +33,7 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose, onTrans
 
   // Mock data for departments
   const departments = ["Tikuv", "Ombor", "Bichish", "Qadoqlash"].filter(
-    (dept) => dept !== user?.department
+    (dept) => dept !== user?.department.name
   )
 
   const handleSubmit = () => {
@@ -318,6 +318,7 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     paddingTop: 14,
+    marginBottom: 50
   },
   buttonContainer: {
     flexDirection: "row",

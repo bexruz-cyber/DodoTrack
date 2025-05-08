@@ -244,12 +244,7 @@ const DepartmentStatsScreen = () => {
         style={styles.headerGradient}
       >
         <View style={styles.headerContent}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <ArrowLeft width={24} height={24} color="white" />
-          </TouchableOpacity>
+   
           <View>
             <Text style={styles.headerTitle}>Bo'limlar statistikasi</Text>
             <Text style={styles.headerSubtitle}>Barcha bo'limlar faoliyati</Text>
@@ -368,12 +363,12 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: "bold",
     color: "white",
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: "rgba(255, 255, 255, 0.8)",
     marginTop: 2,
   },

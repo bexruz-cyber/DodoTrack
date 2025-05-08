@@ -26,7 +26,6 @@ const StartScreen = () => {
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
         <View style={styles.logoContainer}>
-          <Image source={{ uri: "https://cdn-icons-png.flaticon.com/512/2271/2271113.png" }} style={styles.logo} />
 
           <Text style={styles.title}>Tekstil Boshqaruv</Text>
           <Text style={styles.subtitle}>Ishlab chiqarish jarayonlarini samarali boshqarish tizimi</Text>

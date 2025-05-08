@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   },
   modalView: {
     width: "100%",
-    maxHeight: "90%",
+    maxHeight: "70%",
     backgroundColor: "white",
     borderRadius: 16,
     overflow: "hidden",
@@ -303,6 +303,7 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     paddingTop: 14,
+    marginBottom: 50
   },
   buttonContainer: {
     flexDirection: "row",

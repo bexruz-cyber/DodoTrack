@@ -7,11 +7,12 @@ import {
   Alert,
   TouchableOpacity,
   Platform,
+  StatusBar,
 } from "react-native"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
 import { axiosInstance } from "../api/axios"
-import TabBar from "../components/TabBar"
+import TabBar from "../components/tabs/TabBar"
 import EmployeeList from "../components/lists/EmployeeList"
 import DepartmentList from "../components/lists/DepartmentList"
 import ColorList from "../components/lists/ColorList"
@@ -20,40 +21,7 @@ import EmployeeModal from "../components/modals/EmployeeModal"
 import SimpleModal from "../components/modals/SimpleModal"
 import { Plus } from "react-native-feather"
 import LinearGradient from "react-native-linear-gradient"
-
-interface Employee {
-  id: string
-  login: string
-  department: {
-    id: string,
-    name: string
-  }
-  departmentId: string
-  createdAt: string
-  updatedAt: string
-}
-
-
-interface Color {
-  id: string
-  name: string
-  createdAt: string
-  updatedAt: string
-}
-
-interface Size {
-  id: string
-  name: string
-  createdAt: string
-  updatedAt: string
-}
-
-interface EmployeeType {
-  id: string
-  name: string
-  createdAt: string
-  updatedAt: string
-}
+import { Color, Employee, EmployeeType, Size } from "../types/apiType"
 
 const AdminScreen = () => {
   const { user } = useAuth()
@@ -503,6 +471,8 @@ const AdminScreen = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar translucent barStyle="light-content" backgroundColor="transparent" />
+
       <LinearGradient
         colors={['#5e72e4', '#324cdd']}
         start={{ x: 0, y: 0 }}
@@ -510,7 +480,7 @@ const AdminScreen = () => {
         style={styles.header}
       >
         <Text style={styles.title}>Admin panel</Text>
-        <Text style={styles.subtitle}>{user?.department} bo'limi</Text>
+        <Text style={styles.subtitle}>{user?.department.name} bo'limi</Text>
       </LinearGradient>
       <View style={{ paddingHorizontal: 20, paddingTop: 10 }}>
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -537,7 +507,7 @@ const AdminScreen = () => {
         )}
         {activeTab === "colors" && (
           <ColorList
-            colors={colors.map(color => ({ id: color.id, name: color.name }))}
+            colors={colors}
             loading={loading}
             refreshing={refreshing}
             onRefresh={onRefresh}
@@ -547,7 +517,7 @@ const AdminScreen = () => {
         )}
         {activeTab === "sizes" && (
           <SizeList
-            sizes={sizes.map(size => ({ id: size.id, name: size.name }))}
+            sizes={sizes}
             loading={loading}
             refreshing={refreshing}
             onRefresh={onRefresh}

@@ -3,7 +3,12 @@ export interface User {
   fullName: string
   username: string
   password: string
-  department: string
+  department: {
+    createdAt: string
+    updatedAt: string
+    id: string,
+    name: string
+  }
   role: "admin" | "user"
 }
 
@@ -89,3 +94,5 @@ export interface ProductTrackingItem {
   currentDepartment: string
   journey: JourneyStep[]
 }
+
+

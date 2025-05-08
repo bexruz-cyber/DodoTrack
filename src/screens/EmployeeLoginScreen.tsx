@@ -36,7 +36,7 @@ const EmployeeLoginScreen = () => {
 
     setIsLoading(true)
     try {
-      const success = await login(username, password, false) // false for employee login
+      const success = await login(username.trim(), password.trim(), false) // false for employee login
       if (!success) {
         showToast({
           type: "error",
@@ -69,7 +69,6 @@ const EmployeeLoginScreen = () => {
       </TouchableOpacity>
 
       <View style={styles.logoContainer}>
-        <Image source={{ uri: "https://cdn-icons-png.flaticon.com/512/2271/2271113.png" }} style={styles.logo} />
         <Text style={styles.title}>Xodim kirish</Text>
         <Text style={styles.subtitle}>Tizimdan foydalanish uchun hisobingizga kiring</Text>
       </View>

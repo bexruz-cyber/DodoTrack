@@ -20,7 +20,7 @@ import LinearGradient from "react-native-linear-gradient"
 const { width } = Dimensions.get("window")
 
 const ProfileScreen = () => {
-  const { user, logout } = useAuth()
+  const { user, logout, loadUser } = useAuth()
   const { showToast } = useToast()
   const [refreshing, setRefreshing] = useState(false)
 
@@ -39,16 +39,22 @@ const ProfileScreen = () => {
     }
   }
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true)
-    // Simulate data fetching
-    setTimeout(() => {
+    try {
+      await loadUser()
+    } catch (error) {
+      showToast({
+        type: "error",
+        message: "Ma'lumotlar yuklashda hatolik boldi",
+      })
+    } finally{
       setRefreshing(false)
       showToast({
         type: "success",
         message: "Ma'lumotlar yangilandi",
       })
-    }, 1500)
+    }
   }
 
   // Mock statistics
@@ -92,7 +98,7 @@ const ProfileScreen = () => {
               <Text style={styles.initialsText}>{getInitials()}</Text>
             </View>
             <Text style={styles.name}>{user?.fullName}</Text>
-            <Text style={styles.department}>{user?.department} bo'limi</Text>
+            <Text style={styles.department}>{user?.department.name} bo'limi</Text>
           </View>
           <TouchableOpacity
             style={styles.logoutButton}

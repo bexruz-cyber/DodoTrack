@@ -1,18 +1,8 @@
 import React from "react"
 import { FlatList, ActivityIndicator, StyleSheet, RefreshControl, View, Text } from "react-native"
 import ListItem from "./ListItem"
+import { Employee } from "../../types/apiType"
 
-interface Employee {
-  id: string
-  login: string
-  department: {
-    id: string,
-    name: string
-  }
-  departmentId: string
-  createdAt: string
-  updatedAt: string
-}
 
 interface EmployeeListProps {
   employees: Employee[]

@@ -1,14 +1,11 @@
 import React from "react"
 import { FlatList, StyleSheet, RefreshControl, View, Text, ActivityIndicator } from "react-native"
 import ListItem from "./ListItem"
+import { EmployeeType } from "../../types/apiType"
 
-interface Departments {
-  id: string,
-  name: string
-}
 
 interface DepartmentListProps {
-  departments: Departments[],
+  departments: EmployeeType[],
   refreshing: boolean
   onRefresh: () => void
   onEdit: (id: string) => void

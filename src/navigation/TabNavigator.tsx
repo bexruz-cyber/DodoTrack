@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { View, StyleSheet, Animated } from "react-native"
-import { Home, User, BarChart2, Settings, Map } from "react-native-feather"
+import { Home, User, BarChart2, Settings, Map, Compass, Activity } from "react-native-feather"
 import { useAuth } from "../context/AuthContext"
 import HomeScreen from "../screens/HomeScreen"
 import ProfileScreen from "../screens/ProfileScreen"
@@ -82,7 +82,6 @@ const TabNavigator = () => {
   return (
     <Tab.Navigator
       initialRouteName="HomeTab"
-      
       screenOptions={{
         tabBarStyle: {
           ...styles.tabBar,
@@ -111,12 +110,10 @@ const TabNavigator = () => {
         component={ProductTrackingScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon color={color} size={22} icon={Map} focused={focused} />
+            <TabIcon color={color} size={22} icon={Compass} focused={focused} />
           ),
         }}
       />
-
-
 
       <Tab.Screen
         name="HomeTab"
@@ -155,7 +152,7 @@ const TabNavigator = () => {
             component={DepartmentStatsScreen}
             options={{
               tabBarIcon: ({ color, focused }) => (
-                <TabIcon color={color} size={22} icon={Settings} focused={focused} />
+                <TabIcon color={color} size={22} icon={Activity} focused={focused} />
               ),
             }}
           />

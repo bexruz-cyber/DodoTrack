@@ -47,13 +47,6 @@ const EmployeeModal = ({
   onSave,
   onClose,
 }: EmployeeModalProps) => {
-
-
-  console.log(newEmployee.typeId);
-  
-  
-
-
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalContainer}>
       <View style={styles.modalContent}>

@@ -47,7 +47,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     timeoutRef.current = setTimeout(() => {
       hideToast()
-    }, newToast.duration || 5000)
+    }, newToast.duration || 3000)
   }
 
   const hideToast = () => {

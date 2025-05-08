@@ -1,14 +1,10 @@
 import React from "react"
 import { FlatList, StyleSheet, RefreshControl, View, Text, ActivityIndicator } from "react-native"
 import ListItem from "./ListItem"
-
-interface Colors {
-  id: string,
-  name: string
-}
+import { Color } from "../../types/apiType"
 
 interface ColorListProps {
-  colors: Colors[]
+  colors: Color[]
   refreshing: boolean
   onRefresh: () => void
   onEdit: (index: string) => void

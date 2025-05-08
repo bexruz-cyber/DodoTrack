@@ -286,7 +286,7 @@ const DashboardScreen = () => {
         style={styles.header}
       >
         <Text style={styles.title}>Statistika</Text>
-        <Text style={styles.subtitle}>{user?.department} bo'limi</Text>
+        <Text style={styles.subtitle}>{user?.department.name} bo'limi</Text>
       </LinearGradient>
 
       <ScrollView

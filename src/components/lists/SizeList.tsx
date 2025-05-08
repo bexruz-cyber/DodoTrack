@@ -1,16 +1,11 @@
 import React from "react"
 import { FlatList, StyleSheet, RefreshControl, View, Text, ActivityIndicator } from "react-native"
 import ListItem from "./ListItem"
-
-
-interface Sizes {
-  id: string,
-  name: string
-}
+import { Size } from "../../types/apiType"
 
 
 interface SizeListProps {
-  sizes: Sizes[]
+  sizes: Size[]
   refreshing: boolean
   onRefresh: () => void
   onEdit: (index: string) => void

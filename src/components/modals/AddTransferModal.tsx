@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState } from "react"
 import {
@@ -10,41 +12,42 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native"
 import { X, Package } from "react-native-feather"
 import { useAuth } from "../../context/AuthContext"
 import { useToast } from "../../context/ToastContext"
 import LinearGradient from "react-native-linear-gradient"
+import { useAppData } from "../../api/categoryData"
+import { axiosInstance } from "../../api/axios"
 
 interface AddTransferModalProps {
   visible: boolean
   onClose: () => void
-  onAdd: (item: any) => void
 }
 
-const AddTransferModal: React.FC<AddTransferModalProps> = ({ visible, onClose, onAdd }) => {
+const AddTransferModal: React.FC<AddTransferModalProps> = ({ visible, onClose,  }) => {
   const { user } = useAuth()
   const { showToast } = useToast()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const { employees, employeeTypes, colors, sizes, loading, } = useAppData()
 
   const [formData, setFormData] = useState({
     receiverDepartment: "",
+    receiverDepartmentId: "",
     model: "",
     materialType: "",
     totalCount: "",
     color: "",
+    colorId: "",
     size: "",
+    sizeId: "",
     additionalNotes: "",
   })
 
-  // Mock data for dropdowns
-  const departments = ["Tikuv", "Ombor", "Bichish", "Qadoqlash"]
-  const models = ["Model A", "Model B", "Model C", "Model D"]
-  const materials = ["Paxta", "Ipak", "Jun", "Sintetika"]
-  const colors = ["Qora", "Oq", "Ko'k", "Qizil", "Yashil"]
-  const sizes = ["XS", "S", "M", "L", "XL", "XXL"]
-
-  const handleSubmit = () => {
-    if (!formData.receiverDepartment || !formData.model || !formData.materialType || !formData.totalCount) {
+  const handleSubmit = async () => {
+    if (!formData.receiverDepartmentId || !formData.model || !formData.materialType || !formData.totalCount) {
       showToast({
         type: "warning",
         message: "Barcha majburiy maydonlarni to'ldiring",
@@ -52,66 +55,109 @@ const AddTransferModal: React.FC<AddTransferModalProps> = ({ visible, onClose, o
       return
     }
 
-    const newItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      fullName: user?.fullName || "Nomalum foydalanuvchi",
-      sendDate: new Date().toLocaleDateString(),
-      sendTime: new Date().toLocaleTimeString(),
-      senderDepartment: user?.department || "Nomalum bo'lim",
-      receiverDepartment: formData.receiverDepartment,
-      model: formData.model,
-      materialType: formData.materialType,
-      totalCount: Number.parseInt(formData.totalCount),
-      receivedCount: 0,
-      color: formData.color,
-      size: formData.size,
-      additionalNotes: formData.additionalNotes,
-      status: "pending",
+    try {
+      setIsSubmitting(true)
+
+      const apiData = {
+        userName: user?.fullName || "Nomalum foydalanuvchi",
+        yuboruvchiBolimId: user?.department.id || "",
+        qabulQiluvchiBolimId: formData.receiverDepartmentId,
+        model: formData.model,
+        MatoTuri: formData.materialType,
+        umumiySoni: Number.parseInt(formData.totalCount),
+        rangId: formData.colorId,
+        olchamId: formData.sizeId,
+        qoshimchaIzoh: formData.additionalNotes,
+      }
+
+      const response = await axiosInstance.post("https://dodo-kids-back-end.onrender.com/api/mainLineProgress", apiData)
+
+      console.log(response.data);
+      showToast({
+        type: "success",
+        message: "Muvaffaqiyatli qo'shildi",
+      })
+
+      // Reset form
+      setFormData({
+        receiverDepartment: "",
+        receiverDepartmentId: "",
+        model: "",
+        materialType: "",
+        totalCount: "",
+        color: "",
+        colorId: "",
+        size: "",
+        sizeId: "",
+        additionalNotes: "",
+      })
+
+      onClose()
+    } catch (error) {
+      console.error("Error submitting transfer:", error)
+      showToast({
+        type: "error",
+        message: "Xatolik yuz berdi. Qayta urinib ko'ring.",
+      })
+    } finally {
+      setIsSubmitting(false)
     }
-
-    onAdd(newItem)
-    showToast({
-      type: "success",
-      message: "Muvaffaqiyatli qo'shildi",
-    })
-
-    // Reset form
-    setFormData({
-      receiverDepartment: "",
-      model: "",
-      materialType: "",
-      totalCount: "",
-      color: "",
-      size: "",
-      additionalNotes: "",
-    })
-
-    onClose()
   }
 
-  const renderSelectOptions = (options: string[], selectedValue: string, field: keyof typeof formData) => (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionsContainer}>
-      {options.map((option) => (
-        <TouchableOpacity
-          key={option}
-          style={[styles.option, formData[field] === option && styles.selectedOption]}
-          onPress={() => setFormData({ ...formData, [field]: option })}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.optionText, formData[field] === option && styles.selectedOptionText]}>{option}</Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
-  )
+  // Handle department selection
+  const handleDepartmentSelect = (department: any) => {
+    const departmentName = typeof department.name === "string" ? department.name : JSON.stringify(department.name)
+
+    setFormData({
+      ...formData,
+      receiverDepartment: departmentName,
+      receiverDepartmentId: department.id,
+    })
+  }
+
+  // Handle color selection
+  const handleColorSelect = (color: any) => {
+    const colorName = typeof color.name === "string" ? color.name : JSON.stringify(color.name)
+
+    setFormData({
+      ...formData,
+      color: colorName,
+      colorId: color.id,
+    })
+  }
+
+  // Handle size selection
+  const handleSizeSelect = (size: any) => {
+    const sizeName = typeof size.name === "string" ? size.name : JSON.stringify(size.name)
+
+    setFormData({
+      ...formData,
+      size: sizeName,
+      sizeId: size.id,
+    })
+  }
+
+  if (loading) {
+    return (
+      <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
+        <View style={styles.centeredView}>
+          <View style={[styles.modalView, styles.loadingContainer]}>
+            <ActivityIndicator size="large" color="#5e72e4" />
+            <Text style={styles.loadingText}>Ma'lumotlar yuklanmoqda...</Text>
+          </View>
+        </View>
+      </Modal>
+    )
+  }
 
   return (
     <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.centeredView}>
         <View style={styles.modalView}>
           <LinearGradient
-            colors={['#5e72e4', '#324cdd']}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 1}}
+            colors={["#5e72e4", "#324cdd"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.header}
           >
             <View style={styles.headerContent}>
@@ -120,32 +166,92 @@ const AddTransferModal: React.FC<AddTransferModalProps> = ({ visible, onClose, o
               </View>
               <Text style={styles.title}>Yangi uzatma qo'shish</Text>
             </View>
-            <TouchableOpacity 
-              style={styles.closeButton} 
-              onPress={onClose}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.7}>
               <X width={20} height={20} color="white" />
             </TouchableOpacity>
           </LinearGradient>
 
           <ScrollView style={styles.formContainer}>
-            <Text style={styles.label}>Qabul qiluvchi bo'lim <Text style={styles.required}>*</Text></Text>
-            {renderSelectOptions(departments, formData.receiverDepartment, "receiverDepartment")}
+            <Text style={styles.label}>
+              Qabul qiluvchi bo'lim <Text style={styles.required}>*</Text>
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionsContainer}>
+              {employeeTypes.map((department) => (
+                <TouchableOpacity
+                  key={department.id}
+                  style={[styles.option, formData.receiverDepartmentId === department.id && styles.selectedOption]}
+                  onPress={() => handleDepartmentSelect(department)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      formData.receiverDepartmentId === department.id && styles.selectedOptionText,
+                    ]}
+                  >
+                    {typeof department.name === "string" ? department.name : JSON.stringify(department.name)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
 
-            <Text style={styles.label}>Model <Text style={styles.required}>*</Text></Text>
-            {renderSelectOptions(models, formData.model, "model")}
+            <Text style={styles.label}>
+              Model <Text style={styles.required}>*</Text>
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Modelni kiriting"
+              value={formData.model}
+              onChangeText={(text) => setFormData({ ...formData, model: text })}
+              placeholderTextColor="#8898aa"
+            />
 
-            <Text style={styles.label}>Mato turi <Text style={styles.required}>*</Text></Text>
-            {renderSelectOptions(materials, formData.materialType, "materialType")}
+            <Text style={styles.label}>
+              Mato turi <Text style={styles.required}>*</Text>
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Mato turini kiriting"
+              value={formData.materialType}
+              onChangeText={(text) => setFormData({ ...formData, materialType: text })}
+              placeholderTextColor="#8898aa"
+            />
 
             <Text style={styles.label}>Rangi</Text>
-            {renderSelectOptions(colors, formData.color, "color")}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionsContainer}>
+              {colors.map((color) => (
+                <TouchableOpacity
+                  key={color.id}
+                  style={[styles.option, formData.colorId === color.id && styles.selectedOption]}
+                  onPress={() => handleColorSelect(color)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.optionText, formData.colorId === color.id && styles.selectedOptionText]}>
+                    {typeof color.name === "string" ? color.name : JSON.stringify(color.name)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
 
             <Text style={styles.label}>O'lchami</Text>
-            {renderSelectOptions(sizes, formData.size, "size")}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionsContainer}>
+              {sizes.map((size) => (
+                <TouchableOpacity
+                  key={size.id}
+                  style={[styles.option, formData.sizeId === size.id && styles.selectedOption]}
+                  onPress={() => handleSizeSelect(size)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.optionText, formData.sizeId === size.id && styles.selectedOptionText]}>
+                    {typeof size.name === "string" ? size.name : JSON.stringify(size.name)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
 
-            <Text style={styles.label}>Umumiy soni <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>
+              Umumiy soni <Text style={styles.required}>*</Text>
+            </Text>
             <TextInput
               style={styles.input}
               placeholder="Umumiy sonini kiriting"
@@ -169,19 +275,20 @@ const AddTransferModal: React.FC<AddTransferModalProps> = ({ visible, onClose, o
           </ScrollView>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={styles.cancelButton} 
-              onPress={onClose}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.cancelButton} onPress={onClose} activeOpacity={0.7} disabled={isSubmitting}>
               <Text style={styles.cancelButtonText}>Bekor qilish</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.submitButton} 
+            <TouchableOpacity
+              style={styles.submitButton}
               onPress={handleSubmit}
               activeOpacity={0.7}
+              disabled={isSubmitting}
             >
-              <Text style={styles.submitButtonText}>Qo'shish</Text>
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.submitButtonText}>Qo'shish</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -200,7 +307,7 @@ const styles = StyleSheet.create({
   },
   modalView: {
     width: "100%",
-    maxHeight: "90%",
+    maxHeight: "70%",
     backgroundColor: "white",
     borderRadius: 16,
     overflow: "hidden",
@@ -212,6 +319,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  loadingContainer: {
+    height: 200,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#525f7f",
   },
   header: {
     padding: 16,
@@ -247,7 +365,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     padding: 16,
-    maxHeight: "70%",
+    flexGrow: 1,
   },
   label: {
     fontSize: 14,
@@ -271,6 +389,7 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     paddingTop: 14,
+    marginBottom: 50,
   },
   optionsContainer: {
     flexDirection: "row",
