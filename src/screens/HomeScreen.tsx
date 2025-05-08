@@ -402,7 +402,7 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#5e72e4" />
+      <StatusBar translucent barStyle="light-content" backgroundColor="transparent" />
 
       <LinearGradient
         colors={['#5e72e4', '#324cdd']}
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: "rgba(255, 255, 255, 0.8)",
-    marginTop: 4,
+    marginTop: 2,
   },
   searchContainer: {
     flexDirection: "row",

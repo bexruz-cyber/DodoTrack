@@ -117,7 +117,7 @@ const TabNavigator = () => {
 
       <Tab.Screen
         name="HomeTab"
-        component={user?.role =="admin" ? DepartmentStatsScreen : HomeScreen}
+        component={user?.role == "admin" ? DepartmentStatsScreen : HomeScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
             <TabIcon color={color} size={26} icon={Home} focused={focused} isHome={true} />
@@ -125,15 +125,7 @@ const TabNavigator = () => {
         }}
       />
 
-      <Tab.Screen
-        name="ProfileTab"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon color={color} size={22} icon={User} focused={focused} />
-          ),
-        }}
-      />
+
 
       {user?.role === "admin" ? (
         <Tab.Screen
@@ -158,6 +150,15 @@ const TabNavigator = () => {
           />
         )
       }
+      <Tab.Screen
+        name="ProfileTab"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon color={color} size={22} icon={User} focused={focused} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   )
 }

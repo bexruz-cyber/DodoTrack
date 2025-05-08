@@ -16,8 +16,8 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
   login: async () => false,
-  loadUser: async () => {},
-  logout: () => {},
+  loadUser: async () => { },
+  logout: () => { },
 })
 
 export const useAuth = () => useContext(AuthContext)
@@ -55,6 +55,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password: password,
       })
 
+      console.log(response.data);
+
+
       if (response.data) {
         const { token } = response.data
         await AsyncStorage.setItem("token", token)
@@ -78,11 +81,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } else {
           const { employee } = response.data
+
           userData = {
             id: employee.id,
             fullName: employee.login,
             username: employee.login,
-            department: employee.type.name || "nomalum",
+            department: {
+              createdAt: employee.type.createdAt,
+              updatedAt: employee.type.updatedAt,
+              id: employee.type.id,
+              name: employee.type.name
+            },
             password: "",
             role: "user",
           }
