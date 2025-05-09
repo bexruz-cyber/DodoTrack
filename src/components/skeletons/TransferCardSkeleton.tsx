@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from "react"
 import { View, StyleSheet, Animated, Easing } from "react-native"
-import type { SkeletonCardProps } from "../types"
+
+interface SkeletonCardProps {
+  count: number
+}
 
 const SkeletonCard: React.FC<SkeletonCardProps> = ({ count = 3 }) => {
   const shimmerAnimation = useRef(new Animated.Value(0)).current

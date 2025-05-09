@@ -11,11 +11,11 @@ import {
   Platform
 } from "react-native"
 import { useToast } from "../context/ToastContext"
-import { Search, ArrowLeft, Users, Package, Activity, Filter, CheckCircle, XCircle } from "react-native-feather"
-import { useNavigation } from "@react-navigation/native"
+import { Search, Users, Package, Filter, CheckCircle, XCircle } from "react-native-feather"
 import LinearGradient from "react-native-linear-gradient"
 import BottomSheet from "@gorhom/bottom-sheet"
 import FilterBottomSheet from "../components/FilterBottomSheet"
+import { useAppData } from "../api/categoryData"
 
 // Mock data for department statistics
 const departmentData = [
@@ -34,38 +34,23 @@ const departmentData = [
 ]
 
 const DepartmentStatsScreen = () => {
-  const navigation = useNavigation()
   const { showToast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
   const [departments, setDepartments] = useState(departmentData)
+  const { employeeTypes, colors, sizes } = useAppData()
 
-  // Bottom Sheet ref
+  // filter
+  const [activeFilters, setActiveFilters] = useState({
+    color: "",
+    size: "",
+    employeeType: ""
+  })
   const bottomSheetRef = useRef<BottomSheet>(null)
 
-  // Filter options
-  const efficiencyRanges = ["90% va yuqori", "80-90%", "70-80%", "70% dan past"]
-  const sentRanges = ["100+ dona", "50-100 dona", "20-50 dona", "20 donadan kam"]
-  const receivedRanges = ["100+ dona", "50-100 dona", "20-50 dona", "20 donadan kam"]
-
-  // Filter configuration
-  const filterOptions = [
-    { label: "Bo'lim nomi", value: "", options: departmentData.map(dept => dept.name), field: "name" },
-    { label: "Samaradorlik", value: "", options: efficiencyRanges, field: "efficiencyRange" },
-    { label: "Yuborilgan", value: "", options: sentRanges, field: "sentRange" },
-    { label: "Qabul qilingan", value: "", options: receivedRanges, field: "receivedRange" },
-  ]
-
-  const initialFilterValues = {
-    name: "",
-    efficiencyRange: "",
-    sentRange: "",
-    receivedRange: "",
-  }
 
   const onRefresh = () => {
     setRefreshing(true)
-    // Simulate data fetching
     setTimeout(() => {
       setRefreshing(false)
       showToast({
@@ -75,15 +60,7 @@ const DepartmentStatsScreen = () => {
     }, 1500)
   }
 
-  const handleSearch = (text: string) => {
-    setSearchQuery(text)
-    if (text.trim() === "") {
-      setDepartments(departmentData)
-    } else {
-      const filtered = departmentData.filter((dept) => dept.name.toLowerCase().includes(text.toLowerCase()))
-      setDepartments(filtered)
-    }
-  }
+
 
   const handlePresentFilterSheet = useCallback(() => {
     bottomSheetRef.current?.expand()
@@ -244,7 +221,7 @@ const DepartmentStatsScreen = () => {
         style={styles.headerGradient}
       >
         <View style={styles.headerContent}>
-   
+
           <View>
             <Text style={styles.headerTitle}>Bo'limlar statistikasi</Text>
             <Text style={styles.headerSubtitle}>Barcha bo'limlar faoliyati</Text>
@@ -260,7 +237,6 @@ const DepartmentStatsScreen = () => {
             placeholder="Bo'lim nomini qidirish..."
             placeholderTextColor="#8898aa"
             value={searchQuery}
-            onChangeText={handleSearch}
           />
         </View>
         <TouchableOpacity
@@ -326,8 +302,10 @@ const DepartmentStatsScreen = () => {
       {/* Filter Bottom Sheet */}
       <FilterBottomSheet
         ref={bottomSheetRef}
-        filterOptions={filterOptions}
-        initialValues={initialFilterValues}
+        colors={colors || []}
+        sizes={sizes || []}
+        employeeTypes={employeeTypes || []}
+        initialValues={activeFilters}
         onApply={handleApplyFilter}
         onReset={handleResetFilter}
       />

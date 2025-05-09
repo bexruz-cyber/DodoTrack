@@ -18,6 +18,7 @@ import LinearGradient from "react-native-linear-gradient"
 import type { ProductTrackingItem } from "../types"
 import BottomSheet from "@gorhom/bottom-sheet"
 import FilterBottomSheet from "../components/FilterBottomSheet"
+import { useAppData } from "../api/categoryData"
 
 const productTrackingData: ProductTrackingItem[] = [
   {
@@ -105,42 +106,23 @@ const productTrackingData: ProductTrackingItem[] = [
 ]
 
 const ProductTrackingScreen = () => {
-  const navigation = useNavigation()
   const { showToast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
   const [products, setProducts] = useState<ProductTrackingItem[]>(productTrackingData)
-
-  // Filter options
-  const departments = ["Tikuv", "Ombor", "Bichish", "Qadoqlash"]
-  const models = ["Model A", "Model B", "Model C", "Model D"]
-  const materials = ["Paxta", "Ipak", "Jun", "Sintetika"]
-  const colors = ["Ko'k", "Qizil", "Qora", "Yashil"]
-  const sizes = ["S", "M", "L", "XL"]
-
-  // Filter configuration
-  const filterOptions = [
-    { label: "Bo'lim", value: "", options: departments, field: "currentDepartment" },
-    { label: "Model", value: "", options: models, field: "model" },
-    { label: "Mato turi", value: "", options: materials, field: "materialType" },
-    { label: "Rangi", value: "", options: colors, field: "color" },
-    { label: "O'lchami", value: "", options: sizes, field: "size" },
-  ]
-
-  const initialFilterValues = {
-    currentDepartment: "",
-    model: "",
-    materialType: "",
-    color: "",
-    size: "",
-  }
+  const { employeeTypes, colors, sizes } = useAppData()
 
   // Bottom Sheet ref
+
+  const [activeFilters, setActiveFilters] = useState({
+    color: "",
+    size: "",
+    employeeType: ""
+  })
   const bottomSheetRef = useRef<BottomSheet>(null)
 
   const onRefresh = () => {
     setRefreshing(true)
-    // Simulate data fetching
     setTimeout(() => {
       setRefreshing(false)
       showToast({
@@ -150,40 +132,18 @@ const ProductTrackingScreen = () => {
     }, 1500)
   }
 
-  const handleSearch = (text: string) => {
-    setSearchQuery(text)
-    if (text.trim() === "") {
-      setProducts(productTrackingData)
-    } else {
-      const filtered = productTrackingData.filter(
-        (item) =>
-          item.model.toLowerCase().includes(text.toLowerCase()) ||
-          item.materialType.toLowerCase().includes(text.toLowerCase()) ||
-          item.color.toLowerCase().includes(text.toLowerCase()) ||
-          item.currentDepartment.toLowerCase().includes(text.toLowerCase()),
-      )
-      setProducts(filtered)
-    }
-  }
-
+  // filter functions
   const handlePresentFilterSheet = useCallback(() => {
-    bottomSheetRef.current?.expand()
+    if (bottomSheetRef.current) {
+      bottomSheetRef.current.expand()
+    }
   }, [])
 
   const handleApplyFilter = useCallback((filterValues: any) => {
-    // Filter products based on selected values
-    let filteredProducts = [...productTrackingData]
-    
-    Object.keys(filterValues).forEach(key => {
-      if (filterValues[key]) {
-        filteredProducts = filteredProducts.filter(product => 
-          product[key as keyof ProductTrackingItem] === filterValues[key]
-        )
-      }
-    })
-    
-    setProducts(filteredProducts)
-    
+    setActiveFilters(filterValues)
+
+    // Here you would normally filter your data
+    // But for now we're just showing a toast as requested
     showToast({
       type: "success",
       message: "Filtrlar qo'llanildi",
@@ -191,8 +151,17 @@ const ProductTrackingScreen = () => {
   }, [showToast])
 
   const handleResetFilter = useCallback(() => {
-    setProducts(productTrackingData)
-  }, [])
+    setActiveFilters({
+      color: "",
+      size: "",
+      employeeType: ""
+    })
+
+    showToast({
+      type: "info",
+      message: "Filtrlar tozalandi",
+    })
+  }, [showToast])
 
   // Get color for department badge
   const getDepartmentColor = (department: string) => {
@@ -275,7 +244,7 @@ const ProductTrackingScreen = () => {
           </View>
         </View>
       </LinearGradient>
-      
+
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
           <Search width={20} height={20} color="#8898aa" style={styles.searchIcon} />
@@ -283,7 +252,6 @@ const ProductTrackingScreen = () => {
             style={styles.searchInput}
             placeholder="Qidirish..."
             value={searchQuery}
-            onChangeText={handleSearch}
             placeholderTextColor="#8898aa"
           />
         </View>
@@ -314,12 +282,14 @@ const ProductTrackingScreen = () => {
         }
         showsVerticalScrollIndicator={false}
       />
-      
+
       {/* Filter Bottom Sheet */}
       <FilterBottomSheet
         ref={bottomSheetRef}
-        filterOptions={filterOptions}
-        initialValues={initialFilterValues}
+        colors={colors || []}
+        sizes={sizes || []}
+        employeeTypes={employeeTypes || []}
+        initialValues={activeFilters}
         onApply={handleApplyFilter}
         onReset={handleResetFilter}
       />

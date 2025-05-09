@@ -35,7 +35,7 @@ const DetailScreen = () => {
   const { item } = route.params
 
   const isTransferItem = "status" in item
-  const isReceiver = user?.department === (item as TransferItem).receiverDepartment
+  const isReceiver = user?.department.name === (item as TransferItem).receiverDepartment
 
   const handleReceive = () => {
     setIsLoading(true)
