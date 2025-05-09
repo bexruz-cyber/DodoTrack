@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useState, useCallback, useRef } from "react"
 import {
   View,
   Text,
@@ -23,6 +23,8 @@ import ReceiveCard from "../components/cards/ReceiveCard"
 import LinearGradient from "react-native-linear-gradient"
 import BottomSheet from "@gorhom/bottom-sheet"
 import FilterBottomSheet from "../components/FilterBottomSheet"
+import { useAppData } from "../api/categoryData"
+import { renderEmptyList } from "../components/emptyList"
 
 const mockTransferItems: TransferItem[] = [
   {
@@ -77,220 +79,83 @@ const mockReceiveItems: ReceiveItem[] = [
 ]
 
 const HomeScreen = () => {
+  // user
   const { user } = useAuth()
+
+  // toast
   const { showToast } = useToast()
+
+  // tab
   const [activeTab, setActiveTab] = useState<"send" | "receive" | "add">("add")
+  // seach query
   const [searchQuery, setSearchQuery] = useState("")
+  // refresh
   const [isRefreshing, setIsRefreshing] = useState(false)
 
-  // Store original data
+  // data
   const [originalTransferItems] = useState<TransferItem[]>(mockTransferItems)
   const [originalReceiveItems] = useState<ReceiveItem[]>(mockReceiveItems)
+  const { employeeTypes, colors, sizes } = useAppData()
 
-  // Store filtered data
-  const [transferItems, setTransferItems] = useState<TransferItem[]>(mockTransferItems)
-  const [receiveItems, setReceiveItems] = useState<ReceiveItem[]>(mockReceiveItems)
-
-  // Track active filters
+  // filter
   const [activeFilters, setActiveFilters] = useState({
-    send: {},
-    receive: {}
+    color: "",
+    size: "",
+    employeeType: ""
   })
+  const bottomSheetRef = useRef<BottomSheet>(null)
 
+
+  // modal
   const [showAddModal, setShowAddModal] = useState(false)
   const [showReceiveModal, setShowReceiveModal] = useState(false)
   const [showTransferModal, setShowTransferModal] = useState(false)
   const [selectedItem, setSelectedItem] = useState<TransferItem | ReceiveItem | null>(null)
 
-  // Bottom Sheet Filter ref
-  const bottomSheetRef = useRef<BottomSheet>(null)
 
-  // Mock data for filter dropdowns
-  const departments = ["Tikuv", "ombor", "Bichish", "Qadoqlash"]
-  const models = ["Model A", "Model B", "Model C", "Model D"]
-  const materials = ["Paxta", "Ipak", "Jun", "Sintetika"]
-  const colors = ["Qora", "Oq", "Ko'k", "Qizil", "Yashil"]
-  const sizes = ["XS", "S", "M", "L", "XL", "XXL"]
 
-  // Filter options for send tab
-  const sendFilterOptions = [
-    { label: "Yuboruvchi bo'lim", value: "", options: departments, field: "senderDepartment" },
-    { label: "Qabul qiluvchi bo'lim", value: "", options: departments, field: "receiverDepartment" },
-    { label: "Model", value: "", options: models, field: "model" },
-    { label: "Mato turi", value: "", options: materials, field: "materialType" },
-    { label: "Rangi", value: "", options: colors, field: "color" },
-    { label: "O'lchami", value: "", options: sizes, field: "size" },
-  ]
-
-  // Filter options for receive tab
-  const receiveFilterOptions = [
-    { label: "Yuboruvchi bo'lim", value: "", options: departments, field: "senderDepartment" },
-    { label: "Qabul qiluvchi bo'lim", value: "", options: departments, field: "receiverDepartment" },
-    { label: "Model", value: "", options: models, field: "model" },
-    { label: "Mato turi", value: "", options: materials, field: "materialType" },
-    { label: "Rangi", value: "", options: colors, field: "color" },
-    { label: "O'lchami", value: "", options: sizes, field: "size" },
-  ]
-
-  const initialSendFilterValues = {
-    senderDepartment: "",
-    receiverDepartment: "",
-    model: "",
-    materialType: "",
-    color: "",
-    size: "",
-  }
-
-  const initialReceiveFilterValues = {
-    senderDepartment: "",
-    receiverDepartment: "",
-    model: "",
-    materialType: "",
-    color: "",
-    size: "",
-  }
-
-  // Apply both search and filter
-  const applyFiltersAndSearch = useCallback(() => {
-    const isSearchActive = searchQuery.trim() !== ""
-    const activeFilterObj = activeTab === "send" ? activeFilters.send : activeFilters.receive
-    const hasActiveFilters = Object.values(activeFilterObj).some(value => value !== "")
-
-    if (activeTab === "send") {
-      // Start with original data
-      let filteredItems = [...originalTransferItems]
-
-      // Apply filters if any
-      if (hasActiveFilters) {
-        Object.entries(activeFilterObj).forEach(([key, value]) => {
-          if (value) {
-            filteredItems = filteredItems.filter(item =>
-              item[key as keyof TransferItem] === value
-            )
-          }
-        })
-      }
-
-      // Apply search if active
-      if (isSearchActive) {
-        filteredItems = filteredItems.filter(
-          (item) =>
-            item.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.materialType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.color.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.senderDepartment.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.receiverDepartment.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      }
-
-      setTransferItems(filteredItems)
-    } else {
-      // Similar logic for receive items
-      let filteredItems = [...originalReceiveItems]
-
-      if (hasActiveFilters) {
-        Object.entries(activeFilterObj).forEach(([key, value]) => {
-          if (value) {
-            filteredItems = filteredItems.filter(item =>
-              item[key as keyof ReceiveItem] === value
-            )
-          }
-        })
-      }
-
-      if (isSearchActive) {
-        filteredItems = filteredItems.filter(
-          (item) =>
-            item.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.materialType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.color.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.senderDepartment.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.receiverDepartment.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      }
-
-      setReceiveItems(filteredItems)
-    }
-  }, [activeTab, searchQuery, activeFilters, originalTransferItems, originalReceiveItems])
-
-  // Apply filters when tab changes
-  useEffect(() => {
-    applyFiltersAndSearch()
-  }, [activeTab, applyFiltersAndSearch])
-
-  // Bottom Sheet callbacks
+  // filter functions
   const handlePresentFilterSheet = useCallback(() => {
-    bottomSheetRef.current?.expand()
+    if (bottomSheetRef.current) {
+      bottomSheetRef.current.expand()
+    }
   }, [])
 
   const handleApplyFilter = useCallback((filterValues: any) => {
-    // Update active filters
-    if (activeTab === "send") {
-      setActiveFilters(prev => ({
-        ...prev,
-        send: filterValues
-      }))
-    } else {
-      setActiveFilters(prev => ({
-        ...prev,
-        receive: filterValues
-      }))
-    }
+    setActiveFilters(filterValues)
 
-    // Apply filters and search
-    applyFiltersAndSearch()
-
+    // Here you would normally filter your data
+    // But for now we're just showing a toast as requested
     showToast({
       type: "success",
       message: "Filtrlar qo'llanildi",
     })
-  }, [activeTab, showToast, applyFiltersAndSearch])
+  }, [showToast])
 
   const handleResetFilter = useCallback(() => {
-    // Reset active filters
-    if (activeTab === "send") {
-      setActiveFilters(prev => ({
-        ...prev,
-        send: initialSendFilterValues
-      }))
-      setTransferItems(originalTransferItems)
-    } else {
-      setActiveFilters(prev => ({
-        ...prev,
-        receive: initialReceiveFilterValues
-      }))
-      setReceiveItems(originalReceiveItems)
-    }
-
-    // Re-apply search if active
-    if (searchQuery.trim() !== "") {
-      applyFiltersAndSearch()
-    }
+    setActiveFilters({
+      color: "",
+      size: "",
+      employeeType: ""
+    })
 
     showToast({
-      type: "success",
-      message: "Filtrlar bekor qilindi",
+      type: "info",
+      message: "Filtrlar tozalandi",
     })
-  }, [activeTab, originalTransferItems, originalReceiveItems, initialSendFilterValues, initialReceiveFilterValues, searchQuery, applyFiltersAndSearch, showToast])
+  }, [showToast])
 
+  
+  // reload
   const onRefresh = useCallback(() => {
     setIsRefreshing(true)
     // Simulate data fetching
     setTimeout(() => {
       // Reset to original data
       if (activeTab === "send") {
-        setTransferItems([...originalTransferItems])
       } else {
-        setReceiveItems([...originalReceiveItems])
       }
 
-      // Reset filters
-      setActiveFilters({
-        send: initialSendFilterValues,
-        receive: initialReceiveFilterValues
-      })
-
-      // Clear search
       setSearchQuery("")
 
       setIsRefreshing(false)
@@ -299,28 +164,10 @@ const HomeScreen = () => {
         message: "Ma'lumotlar yangilandi",
       })
     }, 1500)
-  }, [activeTab, showToast, originalTransferItems, originalReceiveItems, initialSendFilterValues, initialReceiveFilterValues])
+  }, [activeTab, showToast, originalTransferItems, originalReceiveItems])
 
-  const handleSearch = (text: string) => {
-    setSearchQuery(text)
 
-    // Apply search with delay to improve performance
-    setTimeout(() => {
-      applyFiltersAndSearch()
-    }, 300)
-  }
-
-  const handleAddTransfer = (newItem: TransferItem) => {
-    // Add to both original and filtered list
-    const updatedOriginalItems = [newItem, ...originalTransferItems]
-    setTransferItems([newItem, ...transferItems])
-
-    showToast({
-      type: "success",
-      message: "Yangi ma'lumot qo'shildi",
-    })
-  }
-
+  // modal functions
   const handleReceiveItem = (item: ReceiveItem) => {
     setSelectedItem(item)
     setShowReceiveModal(true)
@@ -349,57 +196,6 @@ const HomeScreen = () => {
     setShowTransferModal(false)
   }
 
-  const renderEmptyList = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>Ma'lumotlar topilmadi</Text>
-    </View>
-  )
-
-  const renderTransferItem = ({ item }: { item: TransferItem }) => (
-    <View>
-      <TransferCard item={item} />
-    </View>
-  )
-
-  const renderReceiveItem = ({ item }: { item: ReceiveItem }) => (
-    <View>
-      <ReceiveCard item={item} />
-      <View style={styles.buttonRow}>
-        <TouchableOpacity
-          style={styles.receiveButton}
-          onPress={() => handleReceiveItem(item)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.receiveButtonText}>Qabul qilish</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.transferButton}
-          onPress={() => handleTransferItem(item)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.transferButtonText}>Uzatish</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  )
-
-  const renderAddItem = ({ item }: { item: ReceiveItem }) => (
-    <View>
-      <ReceiveCard item={item} />
-      <View style={styles.buttonRow}>
-        <TouchableOpacity
-          style={styles.transferButton}
-          onPress={() => handleTransferItem(item)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.transferButtonText}>Uzatish</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  )
-
-
-
   return (
     <View style={styles.container}>
       <StatusBar translucent barStyle="light-content" backgroundColor="transparent" />
@@ -421,7 +217,6 @@ const HomeScreen = () => {
             style={styles.searchInput}
             placeholder="Qidirish..."
             value={searchQuery}
-            onChangeText={handleSearch}
             placeholderTextColor="#8898aa"
           />
         </View>
@@ -461,8 +256,23 @@ const HomeScreen = () => {
 
       {activeTab === "add" ?
         <FlatList
-          data={receiveItems}
-          renderItem={renderAddItem}
+          data={originalReceiveItems}
+          renderItem={
+            ({ item }: { item: ReceiveItem }) => (
+              <View>
+                <ReceiveCard item={item} />
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity
+                    style={styles.transferButton}
+                    onPress={() => handleTransferItem(item)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.transferButtonText}>Uzatish</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )
+          }
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           refreshControl={
@@ -480,8 +290,10 @@ const HomeScreen = () => {
         <>
           {activeTab === "send" ? (
             <FlatList
-              data={transferItems}
-              renderItem={renderTransferItem}
+              data={originalTransferItems}
+              renderItem={({ item }: { item: TransferItem }) => (
+                <TransferCard item={item} />
+              )}
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.listContent}
               refreshControl={
@@ -497,8 +309,30 @@ const HomeScreen = () => {
             />
           ) : (
             <FlatList
-              data={receiveItems}
-              renderItem={renderReceiveItem}
+              data={originalReceiveItems}
+              renderItem={
+                ({ item }: { item: ReceiveItem }) => (
+                  <View>
+                    <ReceiveCard item={item} />
+                    <View style={styles.buttonRow}>
+                      <TouchableOpacity
+                        style={styles.receiveButton}
+                        onPress={() => handleReceiveItem(item)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.receiveButtonText}>Qabul qilish</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.transferButton}
+                        onPress={() => handleTransferItem(item)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.transferButtonText}>Uzatish</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )
+              }
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.listContent}
               refreshControl={
@@ -526,16 +360,13 @@ const HomeScreen = () => {
         </TouchableOpacity>
       )}
 
-
-
       {/* Filter Bottom Sheet */}
       <FilterBottomSheet
         ref={bottomSheetRef}
-        filterOptions={activeTab === "send" ? sendFilterOptions : receiveFilterOptions}
-        initialValues={activeTab === "send" ?
-          (activeFilters.send || initialSendFilterValues) :
-          (activeFilters.receive || initialReceiveFilterValues)
-        }
+        colors={colors || []}
+        sizes={sizes || []}
+        employeeTypes={employeeTypes || []}
+        initialValues={activeFilters}
         onApply={handleApplyFilter}
         onReset={handleResetFilter}
       />
@@ -645,18 +476,7 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 100,
   },
-  emptyContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 40,
-    backgroundColor: "white",
-    borderRadius: 12,
-    marginTop: 20,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: "#8898aa",
-  },
+
   addButton: {
     position: "absolute",
     bottom: 90,

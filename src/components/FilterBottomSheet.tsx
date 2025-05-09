@@ -8,6 +8,40 @@ import {
 } from "react-native"
 import BottomSheet, { BottomSheetBackdrop } from "@gorhom/bottom-sheet"
 
+// Type definitions from your data
+export interface Employee {
+  id: string
+  login: string
+  department: {
+    id: string,
+    name: string
+  }
+  departmentId: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Color {
+  id: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Size {
+  id: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface EmployeeType {
+  id: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
 type FilterOption = {
   label: string
   value: string
@@ -20,15 +54,48 @@ type FilterValues = {
 }
 
 type FilterBottomSheetProps = {
-  filterOptions: FilterOption[]
-  initialValues: FilterValues
+  colors: Color[]
+  sizes: Size[]
+  employeeTypes: EmployeeType[]
+  initialValues?: FilterValues
   onApply: (values: FilterValues) => void
   onReset?: () => void
 }
 
 const FilterBottomSheet = React.forwardRef<BottomSheet, FilterBottomSheetProps>(
-  ({ filterOptions, initialValues, onApply, onReset }, ref) => {
-    const [filterValues, setFilterValues] = useState<FilterValues>(initialValues)
+  ({ colors, sizes, employeeTypes, initialValues = {}, onApply, onReset }, ref) => {
+    // Create filter options from the provided data
+    const filterOptions = useMemo(() => [
+      {
+        label: "Rang",
+        field: "color",
+        value: "",
+        options: colors.map(color => color.name)
+      },
+      {
+        label: "O'lcham",
+        field: "size",
+        value: "",
+        options: sizes.map(size => size.name)
+      },
+      {
+        label: "Xodim turi",
+        field: "employeeType",
+        value: "",
+        options: employeeTypes.map(type => type.name)
+      }
+    ], [colors, sizes, employeeTypes])
+
+    // Create default filter values if not provided
+    const defaultValues = useMemo(() => {
+      const values: FilterValues = {}
+      filterOptions.forEach(option => {
+        values[option.field] = initialValues[option.field] || ""
+      })
+      return values
+    }, [filterOptions, initialValues])
+
+    const [filterValues, setFilterValues] = useState<FilterValues>(defaultValues)
     
     // Bottom Sheet snap points
     const snapPoints = useMemo(() => ["70%"], [])
@@ -63,7 +130,10 @@ const FilterBottomSheet = React.forwardRef<BottomSheet, FilterBottomSheetProps>(
           {option.options.map((optionItem) => (
             <TouchableOpacity
               key={optionItem}
-              style={[styles.option, filterValues[option.field] === optionItem && styles.selectedOption]}
+              style={[
+                styles.option, 
+                filterValues[option.field] === optionItem && styles.selectedOption
+              ]}
               onPress={() => setFilterValues({ ...filterValues, [option.field]: optionItem })}
               activeOpacity={0.7}
             >
