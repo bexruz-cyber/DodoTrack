@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   View,
   Text,
@@ -9,35 +9,46 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native"
 import { X, Package } from "react-native-feather"
 import { useAuth } from "../../context/AuthContext"
 import { useToast } from "../../context/ToastContext"
-import type { TransferItem, ReceiveItem } from "../../types"
 import LinearGradient from "react-native-linear-gradient"
+import { Product } from "../../types/apiType"
+import { axiosInstance } from "../../api/axios"
+import { useAppData } from "../../api/categoryData"
 
 interface TransferModalProps {
   visible: boolean
   onClose: () => void
-  onTransfer: (receiverDepartment: string, count: number, notes: string) => void
-  item: TransferItem | ReceiveItem | null
+  item: Product | null
+  onSuccess: () => void
 }
 
-const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose, onTransfer, item }) => {
+const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose, item, onSuccess }) => {
   const { user } = useAuth()
   const { showToast } = useToast()
 
-  const [receiverDepartment, setReceiverDepartment] = useState("")
-  const [count, setCount] = useState("")
-  const [notes, setNotes] = useState("")
+  const [qabulQiluvchiBolimId, setQabulQiluvchiBolimId] = useState("")
+  const [qabulQiluvchiUsername, setQabulQiluvchiUsername] = useState("")
 
-  // Mock data for departments
-  const departments = ["Tikuv", "Ombor", "Bichish", "Qadoqlash"].filter(
-    (dept) => dept !== user?.department.name
-  )
+  const [yuborilganSoni, setYuborilganSoni] = useState("")
+  const [yaroqsizlarSoni, setYaroqsizlarSoni] = useState("")
+  const [sababi, setSababi] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = () => {
-    if (!receiverDepartment) {
+  const { employees, employeeTypes, loading } = useAppData()
+
+  useEffect(() => {
+    console.log(qabulQiluvchiBolimId);
+  }, [qabulQiluvchiBolimId])
+
+
+  const handleSubmit = async () => {
+    if (!item || !user) return
+
+    if (!qabulQiluvchiBolimId) {
       showToast({
         type: "warning",
         message: "Qabul qiluvchi bo'limni tanlang",
@@ -45,15 +56,15 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose, onTrans
       return
     }
 
-    if (!count) {
+    if (!yuborilganSoni) {
       showToast({
         type: "warning",
-        message: "Uzatilayotgan sonini kiriting",
+        message: "Yuborilgan sonini kiriting",
       })
       return
     }
 
-    const transferCount = Number.parseInt(count)
+    const transferCount = parseInt(yuborilganSoni)
     if (isNaN(transferCount) || transferCount <= 0) {
       showToast({
         type: "warning",
@@ -63,21 +74,82 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose, onTrans
     }
 
     // Check if we have enough items to transfer
-    if (item) {
-      const availableCount = "totalCount" in item ? item.totalCount : item.receivedCount
-      if (transferCount > availableCount) {
-        showToast({
-          type: "warning",
-          message: "Uzatilayotgan son mavjud sondan ko'p bo'lishi mumkin emas",
-        })
-        return
-      }
+    if (transferCount > item.umumiySoni) {
+      showToast({
+        type: "warning",
+        message: "Yuborilgan son mavjud sondan ko'p bo'lishi mumkin emas",
+      })
+      return
     }
 
-    onTransfer(receiverDepartment, transferCount, notes)
-    setReceiverDepartment("")
-    setCount("")
-    setNotes("")
+    if (!yaroqsizlarSoni) {
+      setYaroqsizlarSoni("0") // Default to 0 if not provided
+    }
+
+    const defectCount = parseInt(yaroqsizlarSoni || "0")
+    if (isNaN(defectCount) || defectCount < 0) {
+      showToast({
+        type: "warning",
+        message: "Noto'g'ri yaroqsizlar soni kiritildi",
+      })
+      return
+    }
+
+    // Check if defect count is valid
+    if (defectCount > item.umumiySoni) {
+      showToast({
+        type: "warning",
+        message: "Yaroqsizlar soni umumiy sondan ko'p bo'lishi mumkin emas",
+      })
+      return
+    }
+
+    setSubmitting(true)
+    console.log("qabulQiluvchiBolimId", qabulQiluvchiBolimId);
+    console.log("user bolim", user.department.id);
+    console.log("user hodim", qabulQiluvchiUsername);
+
+
+
+    try {
+      const payload = {
+        id: item.id,
+        userId: user.id,
+        qabulQiluvchiBolimId: qabulQiluvchiBolimId,
+        yuborilganSoni: yuborilganSoni,
+        userName: qabulQiluvchiUsername,
+        yaroqsizlar: {
+          soni: yaroqsizlarSoni || "0",
+          sababi: sababi || "",
+        }
+      }
+
+      console.log("payload", payload);
+      
+
+      await axiosInstance.post('/api/mainLineProgress/complete/', payload)
+
+      showToast({
+        type: "success",
+        message: "Ma'lumot uzatildi",
+      })
+
+      // Reset form and close modal
+      setQabulQiluvchiBolimId("")
+      setYuborilganSoni("")
+      setYaroqsizlarSoni("")
+      setSababi("")
+      onSuccess()
+      onClose()
+    } catch (error: any) {
+      console.error("Uzatishda xatolik:", error.response.data)
+      showToast({
+        type: "error",
+        message: "Ma'lumotni uzatishda xatolik yuz berdi",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (!item) return null
@@ -88,8 +160,8 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose, onTrans
         <View style={styles.modalView}>
           <LinearGradient
             colors={['#5e72e4', '#324cdd']}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 1}}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.header}
           >
             <View style={styles.headerContent}>
@@ -98,10 +170,11 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose, onTrans
               </View>
               <Text style={styles.title}>Uzatish</Text>
             </View>
-            <TouchableOpacity 
-              style={styles.closeButton} 
+            <TouchableOpacity
+              style={styles.closeButton}
               onPress={onClose}
               activeOpacity={0.7}
+              disabled={submitting}
             >
               <X width={20} height={20} color="white" />
             </TouchableOpacity>
@@ -115,71 +188,126 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose, onTrans
               </View>
 
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Mato turi:</Text>
-                <Text style={styles.infoValue}>{item.materialType}</Text>
+                <Text style={styles.infoLabel}>Rang:</Text>
+                <Text style={styles.infoValue}>{item.color?.[0]?.name || "Mavjud emas"}</Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>O'lcham:</Text>
+                <Text style={styles.infoValue}>{item.size?.[0]?.name || "Mavjud emas"}</Text>
               </View>
 
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Mavjud soni:</Text>
-                <Text style={styles.infoValue}>
-                  {"totalCount" in item ? item.totalCount : item.receivedCount}
-                </Text>
+                <Text style={styles.infoValue}>{item.umumiySoni}</Text>
               </View>
             </View>
 
             <Text style={styles.label}>Qabul qiluvchi bo'lim <Text style={styles.required}>*</Text></Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionsContainer}>
-              {departments.map((dept) => (
-                <TouchableOpacity
-                  key={dept}
-                  style={[styles.option, receiverDepartment === dept && styles.selectedOption]}
-                  onPress={() => setReceiverDepartment(dept)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.optionText, receiverDepartment === dept && styles.selectedOptionText]}>
-                    {dept}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color="#5e72e4" size="small" />
+                <Text style={styles.loadingText}>Bo'limlar yuklanmoqda...</Text>
+              </View>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionsContainer}>
+                {employeeTypes.map((dept) => (
+                  <TouchableOpacity
+                    key={dept.id}
+                    style={[styles.option, qabulQiluvchiBolimId === dept.id && styles.selectedOption]}
+                    onPress={() => setQabulQiluvchiBolimId(dept.id)}
+                    activeOpacity={0.7}
+                    disabled={submitting}
+                  >
+                    <Text style={[styles.optionText, qabulQiluvchiBolimId === dept.id && styles.selectedOptionText]}>
+                      {dept.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
 
-            <Text style={styles.label}>Uzatilayotgan soni <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>Qabul qiluvchi hodim <Text style={styles.required}>*</Text></Text>
+
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color="#5e72e4" size="small" />
+                <Text style={styles.loadingText}>Bo'limlar yuklanmoqda...</Text>
+              </View>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionsContainer}>
+                {employees.map((user) => (
+                  <TouchableOpacity
+                    key={user.id}
+                    style={[styles.option, qabulQiluvchiUsername === user.login && styles.selectedOption]}
+                    onPress={() => setQabulQiluvchiUsername(user.login)}
+                    activeOpacity={0.7}
+                    disabled={submitting}
+                  >
+                    <Text style={[styles.optionText, qabulQiluvchiUsername === user.login && styles.selectedOptionText]}>
+                      {user.login}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+
+            <Text style={styles.label}>Yuborilgan soni <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
-              placeholder="Uzatilayotgan sonini kiriting"
+              placeholder="Yuborilgan sonini kiriting"
               keyboardType="numeric"
-              value={count}
-              onChangeText={setCount}
+              value={yuborilganSoni}
+              onChangeText={setYuborilganSoni}
               placeholderTextColor="#8898aa"
+              editable={!submitting}
             />
 
-            <Text style={styles.label}>Qo'shimcha izoh</Text>
+            <Text style={styles.label}>Yaroqsizlar soni</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Yaroqsizlar sonini kiriting"
+              keyboardType="numeric"
+              value={yaroqsizlarSoni}
+              onChangeText={setYaroqsizlarSoni}
+              placeholderTextColor="#8898aa"
+              editable={!submitting}
+            />
+
+            <Text style={styles.label}>Yaroqsizlik sababi</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Qo'shimcha izoh kiriting"
+              placeholder="Yaroqsizlik sababini kiriting"
               multiline
               numberOfLines={4}
-              value={notes}
-              onChangeText={setNotes}
+              value={sababi}
+              onChangeText={setSababi}
               placeholderTextColor="#8898aa"
               textAlignVertical="top"
+              editable={!submitting}
             />
           </ScrollView>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={styles.cancelButton} 
+            <TouchableOpacity
+              style={styles.cancelButton}
               onPress={onClose}
               activeOpacity={0.7}
+              disabled={submitting}
             >
               <Text style={styles.cancelButtonText}>Bekor qilish</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.submitButton} 
+            <TouchableOpacity
+              style={styles.submitButton}
               onPress={handleSubmit}
               activeOpacity={0.7}
+              disabled={submitting}
             >
-              <Text style={styles.submitButtonText}>Uzatish</Text>
+              {submitting ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text style={styles.submitButtonText}>Uzatish</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -358,6 +486,20 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+    backgroundColor: "#f8f9fe",
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  loadingText: {
+    marginLeft: 8,
+    color: "#8898aa",
+    fontSize: 14,
   },
 })
 

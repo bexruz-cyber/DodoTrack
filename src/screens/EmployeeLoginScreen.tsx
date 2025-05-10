@@ -201,6 +201,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#999",
     marginBottom: 20,
+    marginTop: 20 
   },
 })
 

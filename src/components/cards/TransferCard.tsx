@@ -1,23 +1,24 @@
-import type React from "react"
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
-import type { TransferItem } from "../../types"
 import { ArrowRight, Package, CheckCircle, Clock, AlertCircle } from "react-native-feather"
+import { Product } from "../../types/apiType"
 
 type RootStackParamList = {
-  Detail: { item: TransferItem }
+  Detail: { item: Product }
 }
 
 type TransferCardNavigationProp = NativeStackNavigationProp<RootStackParamList, "Detail">
 
 interface TransferCardProps {
-  item: TransferItem
+  item: Product
 }
 
 const TransferCard: React.FC<TransferCardProps> = ({ item }) => {
   const navigation = useNavigation<TransferCardNavigationProp>()
-  const percentage = Math.round((item.receivedCount / item.totalCount) * 100)
+
+  // Calculate percentage based on available data
+  const percentage = Math.round((item.qoshilganlarSoni / item.umumiySoni) * 100) || 0
 
   const getStatusColor = () => {
     if (percentage === 100) return "#2dce89"
@@ -26,26 +27,30 @@ const TransferCard: React.FC<TransferCardProps> = ({ item }) => {
   }
 
   const getStatusIcon = () => {
-    if (item.status === "completed") return <CheckCircle width={16} height={16} color="#2dce89" />
-    if (item.status === "partial") return <Clock width={16} height={16} color="#fb6340" />
+    const status = item.status?.[0]?.status || "pending"
+    if (status === "Completed") return <CheckCircle width={16} height={16} color="#2dce89" />
+    if (status === "InProgress") return <Clock width={16} height={16} color="#fb6340" />
     return <AlertCircle width={16} height={16} color="#f5365c" />
   }
 
   const getStatusText = () => {
-    if (item.status === "completed") return "Yakunlangan"
-    if (item.status === "partial") return "Qisman"
+    const status = item.status?.[0]?.status || "pending"
+    if (status === "Completed") return "Yakunlangan"
+    if (status === "InProgress") return "Qisman"
     return "Kutilmoqda"
   }
 
   const getStatusBgColor = () => {
-    if (item.status === "completed") return "rgba(45, 206, 137, 0.1)"
-    if (item.status === "partial") return "rgba(251, 99, 64, 0.1)"
+    const status = item.status?.[0]?.status || "pending"
+    if (status === "Completed") return "rgba(45, 206, 137, 0.1)"
+    if (status === "InProgress") return "rgba(251, 99, 64, 0.1)"
     return "rgba(245, 54, 92, 0.1)"
   }
 
   const getStatusTextColor = () => {
-    if (item.status === "completed") return "#2dce89"
-    if (item.status === "partial") return "#fb6340"
+    const status = item.status?.[0]?.status || "pending"
+    if (status === "Completed") return "#2dce89"
+    if (status === "InProgress") return "#fb6340"
     return "#f5365c"
   }
 
@@ -58,44 +63,25 @@ const TransferCard: React.FC<TransferCardProps> = ({ item }) => {
       <View style={styles.cardHeader}>
         <View style={styles.departmentContainer}>
           <View style={[styles.departmentBadge, { backgroundColor: "#5e72e4" }]}>
-            <Text style={styles.departmentBadgeText}>{item.senderDepartment}</Text>
+            <Text style={styles.departmentBadgeText}>{item.department}</Text>
           </View>
           <ArrowRight width={16} height={16} color="#8898aa" style={styles.arrow} />
           <View style={[styles.departmentBadge, { backgroundColor: "#2dce89" }]}>
-            <Text style={styles.departmentBadgeText}>{item.receiverDepartment}</Text>
+            <Text style={styles.departmentBadgeText}>{item.qabulQiluvchiBolim}</Text>
           </View>
         </View>
-        <Text style={styles.id}>ID: {item.id.substring(0, 8)}</Text>
+        <Text style={styles.id}>{item.protsessIsOver ? 'Jarayon tugagan' : 'Jarayon davom etmoqda'}</Text>
       </View>
 
       <View style={styles.cardContent}>
-        <View style={styles.iconNameContainer}>
-          <View style={styles.iconContainer}>
-            <Package width={18} height={18} color="#5e72e4" />
-          </View>
-          <Text style={styles.name}>{item.fullName}</Text>
-        </View>
-
-        <View style={styles.detailsContainer}>
-          <View style={styles.detailsRow}>
-            <Text style={styles.detailText}>Model: {item.model}</Text>
-            <Text style={styles.detailText}>Mato: {item.materialType}</Text>
-          </View>
-          <View style={styles.detailsRow}>
-            <Text style={styles.detailText}>Rang: {item.color}</Text>
-            <Text style={styles.detailText}>O'lcham: {item.size}</Text>
-          </View>
-        </View>
-
         <View style={styles.countContainer}>
-          <View style={styles.countItem}>
-            <Text style={styles.countValue}>{item.totalCount}</Text>
-            <Text style={styles.countLabel}>Umumiy</Text>
+          <View style={styles.iconNameContainer}>
+            <View style={styles.iconContainer}>
+              <Package width={18} height={18} color="#5e72e4" />
+            </View>
+            <Text style={styles.name}>{item.model}</Text>
           </View>
-          <View style={styles.countItem}>
-            <Text style={styles.countValue}>{item.receivedCount}</Text>
-            <Text style={styles.countLabel}>Qabul</Text>
-          </View>
+
           <View style={[styles.statusBadge, { backgroundColor: getStatusBgColor() }]}>
             <View style={styles.statusIconContainer}>
               {getStatusIcon()}
@@ -104,6 +90,35 @@ const TransferCard: React.FC<TransferCardProps> = ({ item }) => {
               {getStatusText()}
             </Text>
           </View>
+        </View>
+
+        <View style={styles.detailsContainer}>
+
+          <View style={styles.detailsRow}>
+            <Text style={styles.detailText}>
+              Rang: {item.color?.[0]?.name || "Mavjud emas"}
+            </Text>
+            <Text style={styles.detailText}>
+              O'lcham: {item.size?.[0]?.name || "Mavjud emas"}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.countContainer}>
+          <View style={styles.countItem}>
+            <Text style={styles.countValue}>{item.umumiySoni}</Text>
+            <Text style={styles.countLabel}>Umumiy</Text>
+          </View>
+          <View style={styles.countItem}>
+            <Text style={styles.countValue}>{item.yuborilganlarSoni}</Text>
+            <Text style={styles.countLabel}>Yuborilgan</Text>
+          </View>
+
+          <View style={styles.countItem}>
+            <Text style={styles.countValue}>{item.yaroqsizlarSoni[1].soni}</Text>
+            <Text style={styles.countLabel}>Zarar</Text>
+          </View>
+
         </View>
 
         <View style={styles.progressContainer}>

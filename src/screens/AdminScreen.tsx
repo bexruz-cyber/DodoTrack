@@ -15,13 +15,13 @@ import { axiosInstance } from "../api/axios"
 import TabBar from "../components/tabs/TabBar"
 import EmployeeList from "../components/lists/EmployeeList"
 import DepartmentList from "../components/lists/DepartmentList"
-import ColorList from "../components/lists/ColorList"
 import SizeList from "../components/lists/SizeList"
 import EmployeeModal from "../components/modals/EmployeeModal"
 import SimpleModal from "../components/modals/SimpleModal"
 import { Plus } from "react-native-feather"
 import LinearGradient from "react-native-linear-gradient"
 import { Color, Employee, EmployeeType, Size } from "../types/apiType"
+import ColorList from "../components/lists/ColorList"
 
 const AdminScreen = () => {
   const { user } = useAuth()
@@ -57,6 +57,7 @@ const AdminScreen = () => {
 
 
   const fetchEmployees = async () => {
+    setLoading(true)
     try {
       const response = await axiosInstance.get("/api/employees")
       setEmployees(response.data)
@@ -64,9 +65,13 @@ const AdminScreen = () => {
       console.error("Error fetching employees:", error)
       throw error
     }
+    finally {
+      setLoading(false)
+    }
   }
 
   const fetchEmployeeTypes = async () => {
+    setLoading(true)
     try {
       const response = await axiosInstance.get("/api/employeeType")
       setEmployeeTypes(response.data)
@@ -74,9 +79,13 @@ const AdminScreen = () => {
       console.error("Error fetching employee types:", error)
       throw error
     }
+    finally {
+      setLoading(false)
+    }
   }
 
   const fetchColors = async () => {
+    setLoading(true)
     try {
       const response = await axiosInstance.get("/api/color")
       setColors(response.data)
@@ -84,15 +93,22 @@ const AdminScreen = () => {
       console.error("Error fetching colors:", error)
       throw error
     }
+    finally {
+      setLoading(false)
+    }
   }
 
   const fetchSizes = async () => {
+    setLoading(true)
     try {
       const response = await axiosInstance.get("/api/size")
       setSizes(response.data)
     } catch (error) {
       console.error("Error fetching sizes:", error)
       throw error
+    }
+    finally {
+      setLoading(false)
     }
   }
 
@@ -140,7 +156,7 @@ const AdminScreen = () => {
         const employeeToEdit = employees.find((e) => e.id === id)
         if (employeeToEdit) {
           setNewEmployee({
-            login: employeeToEdit.login,
+            login: employeeToEdit.login.trim(),
             password: "", // Password field is empty when editing
             typeId: employeeToEdit.departmentId,
           })
@@ -191,8 +207,8 @@ const AdminScreen = () => {
     try {
       if (editingId) {
         await axiosInstance.put(`/api/employees/${editingId}`, {
-          login: newEmployee.login,
-          password: newEmployee.password || undefined, // Only send if not empty
+          login: newEmployee.login.trim(),
+          password: newEmployee.password.trim() || undefined, // Only send if not empty
           type: newEmployee.typeId
         })
         showToast({
@@ -201,8 +217,8 @@ const AdminScreen = () => {
         })
       } else {
         await axiosInstance.post("/api/employees", {
-          login: newEmployee.login,
-          password: newEmployee.password, // Use default if empty
+          login: newEmployee.login.trim(),
+          password: newEmployee.password.trim(), // Use default if empty
           typeId: newEmployee.typeId
         })
         showToast({

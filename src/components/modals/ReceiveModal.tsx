@@ -9,35 +9,42 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native"
 import { X, Package } from "react-native-feather"
 import { useToast } from "../../context/ToastContext"
-import type { TransferItem } from "../../types"
 import LinearGradient from "react-native-linear-gradient"
+import { Product } from "../../types/apiType"
+import { axiosInstance } from "../../api/axios"
+import { useAuth } from "../../context/AuthContext"
 
 interface ReceiveModalProps {
   visible: boolean
   onClose: () => void
-  onReceive: (receivedCount: number, notes: string) => void
-  item: TransferItem | null
+  item: Product | null
+  onSuccess: () => void
 }
 
-const ReceiveModal: React.FC<ReceiveModalProps> = ({ visible, onClose, onReceive, item }) => {
+const ReceiveModal: React.FC<ReceiveModalProps> = ({ visible, onClose, item, onSuccess }) => {
+  const { user } = useAuth()
   const { showToast } = useToast()
-  const [receivedCount, setReceivedCount] = useState("")
-  const [notes, setNotes] = useState("")
+  const [yaroqsizlarSoni, setYaroqsizlarSoni] = useState("")
+  const [sababi, setSababi] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = () => {
-    if (!receivedCount) {
+  const handleSubmit = async () => {
+    if (!item || !user) return
+    
+    if (!yaroqsizlarSoni) {
       showToast({
         type: "warning",
-        message: "Qabul qilingan sonini kiriting",
+        message: "Yaroqsizlar sonini kiriting",
       })
       return
     }
 
-    const count = parseInt(receivedCount)
-    if (isNaN(count) || count <= 0) {
+    const count = parseInt(yaroqsizlarSoni)
+    if (isNaN(count) || count < 0) {
       showToast({
         type: "warning",
         message: "Noto'g'ri son kiritildi",
@@ -45,22 +52,52 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ visible, onClose, onReceive
       return
     }
 
-    if (item && count > item.totalCount - item.receivedCount) {
+    if (item && count > item.umumiySoni) {
       showToast({
         type: "warning",
-        message: "Qabul qilingan son qolgan sondan ko'p bo'lishi mumkin emas",
+        message: "Yaroqsizlar soni umumiy sondan ko'p bo'lishi mumkin emas",
       })
       return
     }
 
-    onReceive(count, notes)
-    setReceivedCount("")
-    setNotes("")
+    setSubmitting(true)
+    try {
+      const payload = {
+        mainProtsessId: item.mainProtsessId,
+        lineId: item.id,
+        userId: user.id,
+        yaroqsizlar: {
+          soni: yaroqsizlarSoni.toString(),
+          sababi: sababi
+        }
+      }
+      
+      await axiosInstance.post('/api/mainLineProgress/acceptance/', payload)
+      
+      showToast({
+        type: "success",
+        message: "Ma'lumot qabul qilindi",
+      })
+      
+      // Reset form and close modal
+      setYaroqsizlarSoni("")
+      setSababi("")
+      onSuccess()
+      onClose()
+    } catch (error) {
+      console.error("Qabul qilishda xatolik:", error)
+      showToast({
+        type: "error",
+        message: "Ma'lumotni qabul qilishda xatolik yuz berdi",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (!item) return null
 
-  const remainingCount = item.totalCount - item.receivedCount
+  const remainingCount = item.qoldiqSolni || 0
 
   return (
     <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
@@ -82,6 +119,7 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ visible, onClose, onReceive
               style={styles.closeButton} 
               onPress={onClose}
               activeOpacity={0.7}
+              disabled={submitting}
             >
               <X width={20} height={20} color="white" />
             </TouchableOpacity>
@@ -90,63 +128,65 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ visible, onClose, onReceive
           <ScrollView style={styles.formContainer}>
             <View style={styles.infoCard}>
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Yuboruvchi:</Text>
-                <Text style={styles.infoValue}>{item.fullName}</Text>
-              </View>
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Bo'lim:</Text>
-                <Text style={styles.infoValue}>{item.senderDepartment}</Text>
-              </View>
-
-              <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Model:</Text>
                 <Text style={styles.infoValue}>{item.model}</Text>
               </View>
 
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Mato turi:</Text>
-                <Text style={styles.infoValue}>{item.materialType}</Text>
+                <Text style={styles.infoLabel}>Bo'lim:</Text>
+                <Text style={styles.infoValue}>{item.department}</Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Rang:</Text>
+                <Text style={styles.infoValue}>{item.color?.[0]?.name || "Mavjud emas"}</Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>O'lcham:</Text>
+                <Text style={styles.infoValue}>{item.size?.[0]?.name || "Mavjud emas"}</Text>
               </View>
             </View>
 
             <View style={styles.countCard}>
               <View style={styles.countRow}>
                 <View style={styles.countItem}>
-                  <Text style={styles.countValue}>100</Text>
+                  <Text style={styles.countValue}>{item.umumiySoni}</Text>
                   <Text style={styles.countLabel}>Umumiy soni</Text>
                 </View>
                 <View style={styles.countItem}>
-                  <Text style={styles.countValue}>{item.receivedCount}</Text>
+                  <Text style={styles.countValue}>{item.qoshilganlarSoni}</Text>
                   <Text style={styles.countLabel}>Qabul qilingan</Text>
                 </View>
                 <View style={styles.countItem}>
-                  <Text style={[styles.countValue, { color: "#f5365c" }]}>20</Text>
+                  <Text style={[styles.countValue, { color: "#f5365c" }]}>{remainingCount}</Text>
                   <Text style={styles.countLabel}>Qolgan soni</Text>
                 </View>
               </View>
             </View>
 
-            <Text style={styles.label}>Qabul qilingan soni <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>Yaroqsizlar soni <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
-              placeholder="Qabul qilingan sonini kiriting"
+              placeholder="Yaroqsizlar sonini kiriting"
               keyboardType="numeric"
-              value={receivedCount}
-              onChangeText={setReceivedCount}
+              value={yaroqsizlarSoni}
+              onChangeText={setYaroqsizlarSoni}
               placeholderTextColor="#8898aa"
+              editable={!submitting}
             />
 
-            <Text style={styles.label}>Qo'shimcha izoh</Text>
+            <Text style={styles.label}>Yaroqsizlik sababi</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Qo'shimcha izoh kiriting"
+              placeholder="Yaroqsizlik sababini kiriting"
               multiline
               numberOfLines={4}
-              value={notes}
-              onChangeText={setNotes}
+              value={sababi}
+              onChangeText={setSababi}
               placeholderTextColor="#8898aa"
               textAlignVertical="top"
+              editable={!submitting}
             />
           </ScrollView>
 
@@ -155,6 +195,7 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ visible, onClose, onReceive
               style={styles.cancelButton} 
               onPress={onClose}
               activeOpacity={0.7}
+              disabled={submitting}
             >
               <Text style={styles.cancelButtonText}>Bekor qilish</Text>
             </TouchableOpacity>
@@ -162,8 +203,13 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ visible, onClose, onReceive
               style={styles.submitButton} 
               onPress={handleSubmit}
               activeOpacity={0.7}
+              disabled={submitting}
             >
-              <Text style={styles.submitButtonText}>Qabul qilish</Text>
+              {submitting ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text style={styles.submitButtonText}>Qabul qilish</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>

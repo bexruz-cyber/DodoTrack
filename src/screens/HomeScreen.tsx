@@ -1,4 +1,6 @@
-import { useState, useCallback, useRef } from "react"
+"use client"
+
+import { useState, useCallback, useRef, useEffect } from "react"
 import {
   View,
   Text,
@@ -9,74 +11,24 @@ import {
   TextInput,
   Platform,
   StatusBar,
+  ActivityIndicator,
 } from "react-native"
 
 import { Search, Plus, Filter } from "react-native-feather"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
-import type { TransferItem, ReceiveItem } from "../types"
 import TransferCard from "../components/cards/TransferCard"
-import AddTransferModal from "../components/modals/AddTransferModal"
 import ReceiveModal from "../components/modals/ReceiveModal"
 import TransferModal from "../components/modals/TransferModal"
 import ReceiveCard from "../components/cards/ReceiveCard"
 import LinearGradient from "react-native-linear-gradient"
-import BottomSheet from "@gorhom/bottom-sheet"
+import type BottomSheet from "@gorhom/bottom-sheet"
 import FilterBottomSheet from "../components/FilterBottomSheet"
 import { useAppData } from "../api/categoryData"
 import { renderEmptyList } from "../components/emptyList"
-
-const mockTransferItems: TransferItem[] = [
-  {
-    id: "1",
-    fullName: "user",
-    sendDate: "2023-05-15",
-    sendTime: "10:30",
-    senderDepartment: "Tikuv",
-    receiverDepartment: "ombor",
-    model: "Model A",
-    materialType: "Paxta",
-    totalCount: 100,
-    receivedCount: 80,
-    color: "Ko'k",
-    size: "M",
-    additionalNotes: "Tez yuborish kerak",
-    status: "partial",
-    journey: [
-      { department: "Tikuv", date: "2023-05-15", status: "completed" },
-      { department: "ombor", date: "2023-05-16", status: "current" },
-      { department: "Bichish", date: "", status: "pending" },
-      { department: "Qadoqlash", date: "", status: "pending" },
-    ],
-  },
-  // ... other items remain the same
-]
-
-const mockReceiveItems: ReceiveItem[] = [
-  {
-    id: "1",
-    fullName: "user",
-    receiveDate: "2023-05-15",
-    receiveTime: "14:30",
-    senderDepartment: "Tikuv",
-    receiverDepartment: "ombor",
-    model: "Model A",
-    materialType: "Paxta",
-    sentCount: 100,
-    receivedCount: 80,
-    difference: 20,
-    color: "Ko'k",
-    size: "M",
-    additionalNotes: "Tez yuborish kerak",
-    journey: [
-      { department: "Tikuv", date: "2023-05-15", status: "completed" },
-      { department: "ombor", date: "2023-05-16", status: "current" },
-      { department: "Bichish", date: "", status: "pending" },
-      { department: "Qadoqlash", date: "", status: "pending" },
-    ],
-  },
-  // ... other items remain the same
-]
+import AddStockModal from "../components/modals/AddStockModal"
+import { axiosInstance } from "../api/axios"
+import type { Product } from "../types/apiType"
 
 const HomeScreen = () => {
   // user
@@ -86,33 +38,69 @@ const HomeScreen = () => {
   const { showToast } = useToast()
 
   // tab
-  const [activeTab, setActiveTab] = useState<"send" | "receive" | "add">("add")
+  const [activeTab, setActiveTab] = useState<"send" | "receive">("send")
   // seach query
   const [searchQuery, setSearchQuery] = useState("")
   // refresh
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   // data
-  const [originalTransferItems] = useState<TransferItem[]>(mockTransferItems)
-  const [originalReceiveItems] = useState<ReceiveItem[]>(mockReceiveItems)
+  const [originalTransferItems, setOriginalTransferItems] = useState<Product[]>([])
+  const [originalReceiveItems, setOriginalReceiveItems] = useState<Product[]>([])
   const { employeeTypes, colors, sizes } = useAppData()
-
-  // filter
+  const [loading, setloading] = useState<boolean>(false)
   const [activeFilters, setActiveFilters] = useState({
     color: "",
     size: "",
-    employeeType: ""
+    employeeType: "",
   })
   const bottomSheetRef = useRef<BottomSheet>(null)
 
+  const [selectedItem, setSelectedItem] = useState<Product | null>(null)
 
   // modal
   const [showAddModal, setShowAddModal] = useState(false)
   const [showReceiveModal, setShowReceiveModal] = useState(false)
   const [showTransferModal, setShowTransferModal] = useState(false)
-  const [selectedItem, setSelectedItem] = useState<TransferItem | ReceiveItem | null>(null)
 
+  const GetDataSend = async () => {
+    setloading(true)
+    try {
+      const { data } = await axiosInstance.get(`/api/mainLineProgress/complete/${user?.department.id}`)
+      setOriginalTransferItems(data.data)
+      console.log("Yuborilgan malumot: ", data)
+    } catch (error) {
+      console.log("yuborish:", error)
+      showToast({
+        type: "error",
+        message: "Ma'lumotlarni yuklashda xatolik yuz berdi",
+      })
+    } finally {
+      setloading(false)
+    }
+  }
 
+  const GetDataReceive = async () => {
+    setloading(true)
+    try {
+      const { data } = await axiosInstance.get(`/api/mainLineProgress/acceptance/${user?.department.id}`)
+      setOriginalReceiveItems(data.data)
+      console.log("Qabul qilingan malumot: ", data)
+    } catch (error) {
+      console.log("qabul:", error)
+      showToast({
+        type: "error",
+        message: "Ma'lumotlarni yuklashda xatolik yuz berdi",
+      })
+    } finally {
+      setloading(false)
+    }
+  }
+
+  useEffect(() => {
+    GetDataReceive()
+    GetDataSend()
+  }, [])
 
   // filter functions
   const handlePresentFilterSheet = useCallback(() => {
@@ -121,22 +109,25 @@ const HomeScreen = () => {
     }
   }, [])
 
-  const handleApplyFilter = useCallback((filterValues: any) => {
-    setActiveFilters(filterValues)
+  const handleApplyFilter = useCallback(
+    (filterValues: any) => {
+      setActiveFilters(filterValues)
 
-    // Here you would normally filter your data
-    // But for now we're just showing a toast as requested
-    showToast({
-      type: "success",
-      message: "Filtrlar qo'llanildi",
-    })
-  }, [showToast])
+      // Here you would normally filter your data
+      // But for now we're just showing a toast as requested
+      showToast({
+        type: "success",
+        message: "Filtrlar qo'llanildi",
+      })
+    },
+    [showToast],
+  )
 
   const handleResetFilter = useCallback(() => {
     setActiveFilters({
       color: "",
       size: "",
-      employeeType: ""
+      employeeType: "",
     })
 
     showToast({
@@ -145,7 +136,6 @@ const HomeScreen = () => {
     })
   }, [showToast])
 
-  
   // reload
   const onRefresh = useCallback(() => {
     setIsRefreshing(true)
@@ -153,7 +143,9 @@ const HomeScreen = () => {
     setTimeout(() => {
       // Reset to original data
       if (activeTab === "send") {
+        GetDataSend()
       } else {
+        GetDataReceive()
       }
 
       setSearchQuery("")
@@ -164,48 +156,32 @@ const HomeScreen = () => {
         message: "Ma'lumotlar yangilandi",
       })
     }, 1500)
-  }, [activeTab, showToast, originalTransferItems, originalReceiveItems])
-
+  }, [activeTab, showToast])
 
   // modal functions
-  const handleReceiveItem = (item: ReceiveItem) => {
+  const handleReceiveItem = (item: Product) => {
     setSelectedItem(item)
     setShowReceiveModal(true)
   }
 
-  const handleTransferItem = (item: TransferItem | ReceiveItem) => {
+  const handleTransferItem = (item: Product) => {
     setSelectedItem(item)
     setShowTransferModal(true)
   }
 
-  const handleReceiveSubmit = (receivedCount: number, notes: string) => {
-    // Implement receive submit logic
-    showToast({
-      type: "success",
-      message: "Ma'lumot qabul qilindi",
-    })
-    setShowReceiveModal(false)
-  }
-
-  const handleTransferSubmit = (receiverDepartment: string, count: number, notes: string) => {
-    // Implement transfer submit logic
-    showToast({
-      type: "success",
-      message: "Ma'lumot uzatildi",
-    })
-    setShowTransferModal(false)
+  const handleDataRefresh = () => {
+    if (activeTab === "send") {
+      GetDataSend()
+    } else {
+      GetDataReceive()
+    }
   }
 
   return (
     <View style={styles.container}>
       <StatusBar translucent barStyle="light-content" backgroundColor="transparent" />
 
-      <LinearGradient
-        colors={['#5e72e4', '#324cdd']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
+      <LinearGradient colors={["#5e72e4", "#324cdd"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.header}>
         <Text style={styles.title}>Asosiy sahifa</Text>
         <Text style={styles.subtitle}>{user?.department.name} bo'limi</Text>
       </LinearGradient>
@@ -217,27 +193,17 @@ const HomeScreen = () => {
             style={styles.searchInput}
             placeholder="Qidirish..."
             value={searchQuery}
+            onChangeText={setSearchQuery}
             placeholderTextColor="#8898aa"
           />
         </View>
-        <TouchableOpacity
-          style={styles.filterButton}
-          onPress={handlePresentFilterSheet}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.filterButton} onPress={handlePresentFilterSheet} activeOpacity={0.7}>
           <Filter width={18} height={18} color="white" />
           <Text style={styles.filterButtonText}>Filter</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "add" && styles.activeTab]}
-          onPress={() => setActiveTab("add")}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.tabText, activeTab === "add" && styles.activeTabText]}>Qo'shish</Text>
-        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === "send" && styles.activeTab]}
           onPress={() => setActiveTab("send")}
@@ -254,25 +220,23 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {activeTab === "add" ?
+      {activeTab === "send" ? (
         <FlatList
-          data={originalReceiveItems}
-          renderItem={
-            ({ item }: { item: ReceiveItem }) => (
-              <View>
-                <ReceiveCard item={item} />
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    style={styles.transferButton}
-                    onPress={() => handleTransferItem(item)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.transferButtonText}>Uzatish</Text>
-                  </TouchableOpacity>
-                </View>
+          data={originalTransferItems}
+          renderItem={({ item }: { item: Product }) => (
+            <View>
+              <TransferCard item={item} />
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={styles.transferButton}
+                  onPress={() => handleTransferItem(item)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.transferButtonText}>Uzatish</Text>
+                </TouchableOpacity>
               </View>
-            )
-          }
+            </View>
+          )}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           refreshControl={
@@ -284,78 +248,68 @@ const HomeScreen = () => {
               progressBackgroundColor="#ffffff"
             />
           }
-          ListEmptyComponent={renderEmptyList}
+          ListEmptyComponent={
+            loading ? (
+              <View style={styles.loaderContainer}>
+                <ActivityIndicator color="#5e72e4" size="large" />
+                <Text style={styles.loaderText}>Ma'lumotlar yuklanmoqda...</Text>
+              </View>
+            ) : (
+              renderEmptyList
+            )
+          }
         />
-        :
-        <>
-          {activeTab === "send" ? (
-            <FlatList
-              data={originalTransferItems}
-              renderItem={({ item }: { item: TransferItem }) => (
-                <TransferCard item={item} />
-              )}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listContent}
-              refreshControl={
-                <RefreshControl
-                  refreshing={isRefreshing}
-                  onRefresh={onRefresh}
-                  colors={["#5e72e4"]}
-                  tintColor="#5e72e4"
-                  progressBackgroundColor="#ffffff"
-                />
-              }
-              ListEmptyComponent={renderEmptyList}
-            />
-          ) : (
-            <FlatList
-              data={originalReceiveItems}
-              renderItem={
-                ({ item }: { item: ReceiveItem }) => (
-                  <View>
-                    <ReceiveCard item={item} />
-                    <View style={styles.buttonRow}>
-                      <TouchableOpacity
-                        style={styles.receiveButton}
-                        onPress={() => handleReceiveItem(item)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.receiveButtonText}>Qabul qilish</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.transferButton}
-                        onPress={() => handleTransferItem(item)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.transferButtonText}>Uzatish</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                )
-              }
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listContent}
-              refreshControl={
-                <RefreshControl
-                  refreshing={isRefreshing}
-                  onRefresh={onRefresh}
-                  colors={["#5e72e4"]}
-                  tintColor="#5e72e4"
-                  progressBackgroundColor="#ffffff"
-                />
-              }
-              ListEmptyComponent={renderEmptyList}
-            />
+      ) : (
+        <FlatList
+          data={originalReceiveItems}
+          renderItem={({ item }: { item: Product }) => (
+            <View>
+              <ReceiveCard item={item} />
+              <View style={styles.buttonRow}>
+                {item.status[0]?.status === "Pending" && (
+                  <TouchableOpacity
+                    style={styles.receiveButton}
+                    onPress={() => handleReceiveItem(item)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.receiveButtonText}>Qabul qilish</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  style={styles.transferButton}
+                  onPress={() => handleTransferItem(item)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.transferButtonText}>Uzatish</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           )}
-        </>
-      }
-
-      {user?.department.name === "ombor" && activeTab === "add" && (
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setShowAddModal(true)}
-          activeOpacity={0.8}
-        >
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              colors={["#5e72e4"]}
+              tintColor="#5e72e4"
+              progressBackgroundColor="#ffffff"
+            />
+          }
+          ListEmptyComponent={
+            loading ? (
+              <View style={styles.loaderContainer}>
+                <ActivityIndicator color="#5e72e4" size="large" />
+                <Text style={styles.loaderText}>Ma'lumotlar yuklanmoqda...</Text>
+              </View>
+            ) : (
+              renderEmptyList
+            )
+          }
+        />
+      )}
+      {user?.department.name === "ombor" || user?.department.name === "Ombor " && (
+        <TouchableOpacity style={styles.addButton} onPress={() => setShowAddModal(true)} activeOpacity={0.8}>
           <Plus width={24} height={24} color="white" />
         </TouchableOpacity>
       )}
@@ -371,22 +325,19 @@ const HomeScreen = () => {
         onReset={handleResetFilter}
       />
 
-      <AddTransferModal
-        visible={showAddModal}
-        onClose={() => setShowAddModal(false)}
-      />
+      <AddStockModal visible={showAddModal} onClose={() => setShowAddModal(false)} />
       <ReceiveModal
         visible={showReceiveModal}
         onClose={() => setShowReceiveModal(false)}
-        onReceive={handleReceiveSubmit}
-        item={selectedItem as TransferItem}
+        item={selectedItem}
+        onSuccess={handleDataRefresh}
       />
 
       <TransferModal
         visible={showTransferModal}
         onClose={() => setShowTransferModal(false)}
-        onTransfer={handleTransferSubmit}
         item={selectedItem}
+        onSuccess={handleDataRefresh}
       />
     </View>
   )
@@ -398,7 +349,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fe",
   },
   header: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingTop: Platform.OS === "ios" ? 60 : 40,
     paddingBottom: 20,
     paddingHorizontal: 20,
     borderBottomLeftRadius: 30,
@@ -506,6 +457,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
+  },
+
+  loaderContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: 30,
+  },
+  loaderText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#8898aa",
   },
   receiveButtonText: {
     color: "white",

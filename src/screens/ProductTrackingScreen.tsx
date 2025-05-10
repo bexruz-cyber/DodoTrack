@@ -12,8 +12,7 @@ import {
 } from "react-native"
 import { useToast } from "../context/ToastContext"
 import ItemJourney from "../components/ItemJourney"
-import { Search, ArrowLeft, Tag, Layers, Filter } from "react-native-feather"
-import { useNavigation } from "@react-navigation/native"
+import { Search, Tag, Layers, Filter } from "react-native-feather"
 import LinearGradient from "react-native-linear-gradient"
 import type { ProductTrackingItem } from "../types"
 import BottomSheet from "@gorhom/bottom-sheet"
@@ -111,9 +110,6 @@ const ProductTrackingScreen = () => {
   const [refreshing, setRefreshing] = useState(false)
   const [products, setProducts] = useState<ProductTrackingItem[]>(productTrackingData)
   const { employeeTypes, colors, sizes } = useAppData()
-
-  // Bottom Sheet ref
-
   const [activeFilters, setActiveFilters] = useState({
     color: "",
     size: "",

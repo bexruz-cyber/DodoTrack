@@ -31,6 +31,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userJson = await AsyncStorage.getItem("user")
       const token = await AsyncStorage.getItem("token")
 
+      const {data} = await axios.post(`https://dodo-kids-back-end.onrender.com/${token}`) 
+
+      console.log(data);
+      
+
       if (userJson && token) {
         setUser(JSON.parse(userJson))
       }

@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     padding: 20,
-    maxHeight: 420,
+    maxHeight: "59%",
   },
   selectContainer: {
     marginBottom: 20,

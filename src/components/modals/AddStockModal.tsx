@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   View,
   Text,
@@ -26,12 +26,20 @@ interface AddTransferModalProps {
   onClose: () => void
 }
 
-const AddTransferModal: React.FC<AddTransferModalProps> = ({ visible, onClose,  }) => {
+const AddStockModal: React.FC<AddTransferModalProps> = ({ visible, onClose,  }) => {
   const { user } = useAuth()
   const { showToast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const { employeeTypes, colors, sizes, loading, } = useAppData()
+  const { refetchAll, colors, sizes, loading, } = useAppData()
+
+  useEffect(() => {
+    const getData = async() => {
+      await refetchAll()
+    }
+    getData()
+  }, [visible])
+  
 
   const [formData, setFormData] = useState({
     receiverDepartment: "",
@@ -47,7 +55,7 @@ const AddTransferModal: React.FC<AddTransferModalProps> = ({ visible, onClose,  
   })
 
   const handleSubmit = async () => {
-    if (!formData.receiverDepartmentId || !formData.model || !formData.materialType || !formData.totalCount) {
+    if (!formData.model || !formData.materialType || !formData.totalCount) {
       showToast({
         type: "warning",
         message: "Barcha majburiy maydonlarni to'ldiring",
@@ -58,21 +66,21 @@ const AddTransferModal: React.FC<AddTransferModalProps> = ({ visible, onClose,  
     try {
       setIsSubmitting(true)
 
-      const apiData = {
-        userName: user?.fullName || "Nomalum foydalanuvchi",
+      
+      const response = await axiosInstance.post("/api/mainLineProgress", {
+        userName: user?.username || "Nomalum foydalanuvchi",
+        userId: user?.id,
         yuboruvchiBolimId: user?.department.id || "",
-        qabulQiluvchiBolimId: formData.receiverDepartmentId,
+        qabulQiluvchiBolimId: user?.department.id,
         model: formData.model,
         MatoTuri: formData.materialType,
         umumiySoni: Number.parseInt(formData.totalCount),
         rangId: formData.colorId,
         olchamId: formData.sizeId,
         qoshimchaIzoh: formData.additionalNotes,
-      }
+      })
 
-      const response = await axiosInstance.post("https://dodo-kids-back-end.onrender.com/api/mainLineProgress", apiData)
-
-      console.log(response.data);
+      console.log("yuborilgan malumot modal:", response.data);
       showToast({
         type: "success",
         message: "Muvaffaqiyatli qo'shildi",
@@ -93,8 +101,8 @@ const AddTransferModal: React.FC<AddTransferModalProps> = ({ visible, onClose,  
       })
 
       onClose()
-    } catch (error) {
-      console.error("Error submitting transfer:", error)
+    } catch (error: any) {
+      console.log("Error submitting transfer:", error)
       showToast({
         type: "error",
         message: "Xatolik yuz berdi. Qayta urinib ko'ring.",
@@ -102,17 +110,6 @@ const AddTransferModal: React.FC<AddTransferModalProps> = ({ visible, onClose,  
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  // Handle department selection
-  const handleDepartmentSelect = (department: any) => {
-    const departmentName = typeof department.name === "string" ? department.name : JSON.stringify(department.name)
-
-    setFormData({
-      ...formData,
-      receiverDepartment: departmentName,
-      receiverDepartmentId: department.id,
-    })
   }
 
   // Handle color selection
@@ -172,29 +169,6 @@ const AddTransferModal: React.FC<AddTransferModalProps> = ({ visible, onClose,  
           </LinearGradient>
 
           <ScrollView style={styles.formContainer}>
-            <Text style={styles.label}>
-              Qabul qiluvchi bo'lim <Text style={styles.required}>*</Text>
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionsContainer}>
-              {employeeTypes.map((department) => (
-                <TouchableOpacity
-                  key={department.id}
-                  style={[styles.option, formData.receiverDepartmentId === department.id && styles.selectedOption]}
-                  onPress={() => handleDepartmentSelect(department)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      formData.receiverDepartmentId === department.id && styles.selectedOptionText,
-                    ]}
-                  >
-                    {typeof department.name === "string" ? department.name : JSON.stringify(department.name)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
             <Text style={styles.label}>
               Model <Text style={styles.required}>*</Text>
             </Text>
@@ -456,4 +430,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default AddTransferModal
+export default AddStockModal
