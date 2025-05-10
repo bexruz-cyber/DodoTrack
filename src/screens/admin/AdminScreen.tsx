@@ -9,19 +9,19 @@ import {
   Platform,
   StatusBar,
 } from "react-native"
-import { useAuth } from "../context/AuthContext"
-import { useToast } from "../context/ToastContext"
-import { axiosInstance } from "../api/axios"
-import TabBar from "../components/tabs/TabBar"
-import EmployeeList from "../components/lists/EmployeeList"
-import DepartmentList from "../components/lists/DepartmentList"
-import SizeList from "../components/lists/SizeList"
-import EmployeeModal from "../components/modals/EmployeeModal"
-import SimpleModal from "../components/modals/SimpleModal"
+import { useAuth } from "../../context/AuthContext"
+import { useToast } from "../../context/ToastContext"
+import { axiosInstance } from "../../api/axios"
+import TabBar from "../../components/tabs/TabBar"
+import EmployeeList from "../../components/lists/EmployeeList"
+import DepartmentList from "../../components/lists/DepartmentList"
+import SizeList from "../../components/lists/SizeList"
+import EmployeeModal from "../../components/modals/EmployeeModal"
+import SimpleModal from "../../components/modals/SimpleModal"
 import { Plus } from "react-native-feather"
 import LinearGradient from "react-native-linear-gradient"
-import { Color, Employee, EmployeeType, Size } from "../types/apiType"
-import ColorList from "../components/lists/ColorList"
+import { Color, Employee, EmployeeType, Size } from "../../types/apiType"
+import ColorList from "../../components/lists/ColorList"
 
 const AdminScreen = () => {
   const { user } = useAuth()
@@ -496,7 +496,7 @@ const AdminScreen = () => {
         style={styles.header}
       >
         <Text style={styles.title}>Admin panel</Text>
-        <Text style={styles.subtitle}>{user?.department.name} bo'limi</Text>
+        <Text style={styles.subtitle}>{user?.employee.name} bo'limi</Text>
       </LinearGradient>
       <View style={{ paddingHorizontal: 20, paddingTop: 10 }}>
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />

@@ -2,14 +2,14 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { View, StyleSheet, Animated } from "react-native"
 import { Home, User, BarChart2, Settings, Map, Compass, Activity } from "react-native-feather"
 import { useAuth } from "../context/AuthContext"
-import HomeScreen from "../screens/HomeScreen"
-import ProfileScreen from "../screens/ProfileScreen"
-import DashboardScreen from "../screens/DashboardScreen"
-import AdminScreen from "../screens/AdminScreen"
-import ProductTrackingScreen from "../screens/ProductTrackingScreen"
+import ProfileScreen from "../screens/Profile/ProfileScreen"
+import DashboardScreen from "../screens/Dashboards/DashboardScreen"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useRef, useEffect } from "react"
-import DepartmentStatsScreen from "../screens/DepartmentStatsScreen"
+import ProductTrackingScreen from "../screens/Dashboards/ProductTrackingScreen"
+import DepartmentStatsScreen from "../screens/Dashboards/DepartmentStatsScreen"
+import HomeScreen from "../screens/Home/HomeScreen"
+import AdminScreen from "../screens/admin/AdminScreen"
 
 type TabParamList = {
   DashboardTab: undefined;
@@ -117,7 +117,7 @@ const TabNavigator = () => {
 
       <Tab.Screen
         name="HomeTab"
-        component={user?.role == "admin" ? DepartmentStatsScreen : HomeScreen}
+        component={user?.role == "ADMIN" ? DepartmentStatsScreen : HomeScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
             <TabIcon color={color} size={26} icon={Home} focused={focused} isHome={true} />
@@ -127,7 +127,7 @@ const TabNavigator = () => {
 
 
 
-      {user?.role === "admin" ? (
+      {user?.role === "ADMIN" ? (
         <Tab.Screen
           name="AdminTab"
           component={AdminScreen}

@@ -7,7 +7,7 @@ import axios from "axios"
 interface AuthContextType {
   user: User | null
   isLoading: boolean
-  login: (username: string, password: string, isAdmin: boolean) => Promise<boolean>
+  login: (username: string, password: string) => Promise<boolean>
   loadUser: () => Promise<void>
   logout: () => void
 }
@@ -31,16 +31,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userJson = await AsyncStorage.getItem("user")
       const token = await AsyncStorage.getItem("token")
 
-      const {data} = await axios.post(`https://dodo-kids-back-end.onrender.com/${token}`) 
+      // const { data } = await axios.post(`https://dodo-kids-back-end.onrender.com/${token}`)
 
-      console.log(data);
-      
+      // console.log(data);
 
       if (userJson && token) {
         setUser(JSON.parse(userJson))
       }
     } catch (error) {
-      console.error("Failed to load user from storage", error)
+      console.error("Midleware error", error)
       await AsyncStorage.removeItem("user")
       await AsyncStorage.removeItem("token")
     } finally {
@@ -52,54 +51,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadUser()
   }, [])
 
-  const login = async (username: string, password: string, isAdmin: boolean): Promise<boolean> => {
+  const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      const endpoint = isAdmin ? "/api/auth/admin/login" : "/api/auth/employee/login"
-      const response = await axios.post(`https://dodo-kids-back-end.onrender.com${endpoint}`, {
+      const { data } = await axios.post(`https://dodo-kids-back-end.onrender.com/api/auth/login`, {
         login: username,
         password: password,
       })
 
-      console.log(response.data);
+      console.log("Loginn data", data)
 
-
-      if (response.data) {
-        const { token } = response.data
+      if (data) {
+        const { token } = data
         await AsyncStorage.setItem("token", token)
 
         let userData: User
 
-        if (isAdmin) {
-          const { admin } = response.data
-          userData = {
-            id: admin.id,
-            fullName: admin.fullName || admin.login,
-            username: admin.login,
-            department: {
-              createdAt: "",
-              updatedAt: "",
-              id: "Boshqaruv",
-              name: "Boshqaruv"
-            },
-            password: "",
-            role: "admin",
-          }
-        } else {
-          const { employee } = response.data
-
-          userData = {
-            id: employee.id,
-            fullName: employee.login,
-            username: employee.login,
-            department: {
-              createdAt: employee.type.createdAt,
-              updatedAt: employee.type.updatedAt,
-              id: employee.type.id,
-              name: employee.type.name
-            },
-            password: "",
-            role: "user",
-          }
+        userData = {
+          id: data.employee.id,
+          username: data.login,
+          role: data.role,
+          employee: {
+            id: data.employee.id,
+            userId: data.employee.userId,
+            name: data.role === "ADMIN" ? "Boshqaruv" : data.role,
+            departmentId: data.departmentId,
+            createdAt: data.employee.id,
+            updatedAt: data.employee.id,
+          },
         }
 
         setUser(userData)
@@ -113,6 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false
     }
   }
+
 
   const logout = async () => {
     try {

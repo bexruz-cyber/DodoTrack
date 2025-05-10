@@ -70,8 +70,8 @@ const AddStockModal: React.FC<AddTransferModalProps> = ({ visible, onClose,  }) 
       const response = await axiosInstance.post("/api/mainLineProgress", {
         userName: user?.username || "Nomalum foydalanuvchi",
         userId: user?.id,
-        yuboruvchiBolimId: user?.department.id || "",
-        qabulQiluvchiBolimId: user?.department.id,
+        yuboruvchiBolimId: user?.employee.departmentId || "",
+        qabulQiluvchiBolimId: user?.employee.departmentId,
         model: formData.model,
         MatoTuri: formData.materialType,
         umumiySoni: Number.parseInt(formData.totalCount),

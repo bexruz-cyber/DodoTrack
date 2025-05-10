@@ -11,8 +11,8 @@ import {
   Dimensions,
   Platform
 } from "react-native"
-import { useAuth } from "../context/AuthContext"
-import { useToast } from "../context/ToastContext"
+import { useAuth } from "../../context/AuthContext"
+import { useToast } from "../../context/ToastContext"
 import { LogOut, User, Activity, Package, Clock, CheckCircle, Users, Briefcase, Type, Tag } from "react-native-feather"
 
 import LinearGradient from "react-native-linear-gradient"
@@ -65,11 +65,7 @@ const ProfileScreen = () => {
     completed: 32,
   }
 
-  // Get first letter of name for avatar placeholder
-  const getInitials = () => {
-    if (!user?.fullName) return "U";
-    return user.fullName.charAt(0).toUpperCase();
-  }
+
 
   return (
     <View style={styles.container}>
@@ -95,10 +91,10 @@ const ProfileScreen = () => {
         >
           <View style={styles.headerContent}>
             <View style={styles.profileImageContainer}>
-              <Text style={styles.initialsText}>{getInitials()}</Text>
+              <Text style={styles.initialsText}></Text>
             </View>
-            <Text style={styles.name}>{user?.fullName}</Text>
-            <Text style={styles.department}>{user?.department.name} bo'limi</Text>
+            <Text style={styles.name}>{user?.username}</Text>
+            <Text style={styles.department}>{user?.employee.name} bo'limi</Text>
           </View>
           <TouchableOpacity
             style={styles.logoutButton}
@@ -126,12 +122,12 @@ const ProfileScreen = () => {
                 <Briefcase width={18} height={18} color="#5e72e4" />
               </View>
               <Text style={styles.infoLabel}>Lavozim</Text>
-              <Text style={styles.infoValue}>{user?.role === "admin" ? "Administrator" : "Xodim"}</Text>
+              <Text style={styles.infoValue}>{user?.role === "ADMIN" ? "Administrator" : "Xodim"}</Text>
             </View>
           </View>
 
 
-          {user?.role == "user" ?
+          {user?.role == "USER" ?
             <>
               <Text style={styles.sectionTitle}>Statistika</Text>
               <View style={styles.statsGrid}>

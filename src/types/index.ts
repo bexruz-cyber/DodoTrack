@@ -1,15 +1,15 @@
 export interface User {
   id: string
-  fullName: string
   username: string
-  password: string
-  department: {
+  employee: {
     createdAt: string
     updatedAt: string
     id: string,
-    name: string
+    departmentId: string
+    name: string,
+    userId: string
   }
-  role: "admin" | "user"
+  role: "ADMIN" | "USER"
 }
 
 export interface Department {

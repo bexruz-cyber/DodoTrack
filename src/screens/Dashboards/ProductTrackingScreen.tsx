@@ -10,14 +10,14 @@ import {
   TouchableOpacity,
   Platform
 } from "react-native"
-import { useToast } from "../context/ToastContext"
-import ItemJourney from "../components/ItemJourney"
+import { useToast } from "../../context/ToastContext"
+import ItemJourney from "../../components/ItemJourney"
 import { Search, Tag, Layers, Filter } from "react-native-feather"
 import LinearGradient from "react-native-linear-gradient"
-import type { ProductTrackingItem } from "../types"
+import type { ProductTrackingItem } from "../../types"
 import BottomSheet from "@gorhom/bottom-sheet"
-import FilterBottomSheet from "../components/FilterBottomSheet"
-import { useAppData } from "../api/categoryData"
+import FilterBottomSheet from "../../components/FilterBottomSheet"
+import { useAppData } from "../../api/categoryData"
 
 const productTrackingData: ProductTrackingItem[] = [
   {

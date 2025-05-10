@@ -1,7 +1,7 @@
 import axios from "axios"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
-const baseURL = "https://dodo-kids-back-end.onrender.com" // Replace with your actual API base URL
+export const baseURL = "https://dodo-kids-back-end.onrender.com" // Replace with your actual API base URL
 
 export const axiosInstance = axios.create({
   baseURL,

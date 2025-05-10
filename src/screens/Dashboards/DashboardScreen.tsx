@@ -10,10 +10,10 @@ import {
   Platform
 } from "react-native"
 import { useNavigation } from "@react-navigation/native"
-import { useAuth } from "../context/AuthContext"
-import { useToast } from "../context/ToastContext"
-import ItemJourney from "../components/ItemJourney"
-import type { ProductTrackingItem } from "../types"
+import { useAuth } from "../../context/AuthContext"
+import { useToast } from "../../context/ToastContext"
+import ItemJourney from "../../components/ItemJourney"
+import type { ProductTrackingItem } from "../../types"
 import { 
   ChevronRight, 
   Box, 
@@ -26,7 +26,7 @@ import {
 
 import LinearGradient from "react-native-linear-gradient"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
-import { RootStackParamList } from "../navigation/AppNavigator"
+import { RootStackParamList } from "../../navigation/AppNavigator"
 
 // Mock data for charts
 const departmentData = [
@@ -286,7 +286,7 @@ const DashboardScreen = () => {
         style={styles.header}
       >
         <Text style={styles.title}>Statistika</Text>
-        <Text style={styles.subtitle}>{user?.department.name} bo'limi</Text>
+        <Text style={styles.subtitle}>{user?.employee.name} bo'limi</Text>
       </LinearGradient>
 
       <ScrollView

@@ -106,7 +106,7 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose, item, o
 
     setSubmitting(true)
     console.log("qabulQiluvchiBolimId", qabulQiluvchiBolimId);
-    console.log("user bolim", user.department.id);
+    console.log("user bolim", user.employee.departmentId);
     console.log("user hodim", qabulQiluvchiUsername);
 
 

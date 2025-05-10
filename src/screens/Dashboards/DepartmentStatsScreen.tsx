@@ -10,12 +10,12 @@ import {
   TouchableOpacity,
   Platform
 } from "react-native"
-import { useToast } from "../context/ToastContext"
+import { useToast } from "../../context/ToastContext"
 import { Search, Users, Package, Filter, CheckCircle, XCircle } from "react-native-feather"
 import LinearGradient from "react-native-linear-gradient"
 import BottomSheet from "@gorhom/bottom-sheet"
-import FilterBottomSheet from "../components/FilterBottomSheet"
-import { useAppData } from "../api/categoryData"
+import FilterBottomSheet from "../../components/FilterBottomSheet"
+import { useAppData } from "../../api/categoryData"
 
 // Mock data for department statistics
 const departmentData = [

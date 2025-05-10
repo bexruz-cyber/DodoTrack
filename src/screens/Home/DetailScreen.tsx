@@ -10,12 +10,12 @@ import {
   Platform
 } from "react-native"
 import { useRoute, type RouteProp, useNavigation } from "@react-navigation/native"
-import { useAuth } from "../context/AuthContext"
-import { useToast } from "../context/ToastContext"
-import ItemJourney from "../components/ItemJourney"
+import { useAuth } from "../../context/AuthContext"
+import { useToast } from "../../context/ToastContext"
+import ItemJourney from "../../components/ItemJourney"
 import LinearGradient from "react-native-linear-gradient"
 import { ArrowLeft, FileText, Package, User, Calendar, Layers } from "react-native-feather"
-import type { TransferItem, ReceiveItem } from "../types"
+import type { TransferItem, ReceiveItem } from "../../types"
 
 type DetailScreenRouteProp = RouteProp<
   {
@@ -35,7 +35,7 @@ const DetailScreen = () => {
   const { item } = route.params
 
   const isTransferItem = "status" in item
-  const isReceiver = user?.department.name === (item as TransferItem).receiverDepartment
+  const isReceiver = user?.employee.name === (item as TransferItem).receiverDepartment
 
   const handleReceive = () => {
     setIsLoading(true)

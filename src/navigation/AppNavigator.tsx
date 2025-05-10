@@ -2,18 +2,17 @@ import React from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import { useAuth } from '../context/AuthContext'
 import TabNavigator from './TabNavigator'
-import StartScreen from '../screens/StartScreen'
-import AdminLoginScreen from '../screens/AdminLoginScreen'
-import EmployeeLoginScreen from '../screens/EmployeeLoginScreen'
+import StartScreen from '../screens/Start/StartScreen'
+import AdminLoginScreen from '../screens/Auth/Login'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import ProductTrackingScreen from '../screens/ProductTrackingScreen'
-import DepartmentStatsScreen from '../screens/DepartmentStatsScreen'
-import DetailScreen from '../screens/DetailScreen'
+import ProductTrackingScreen from '../screens/Dashboards/ProductTrackingScreen'
+import DepartmentStatsScreen from '../screens/Dashboards/DepartmentStatsScreen'
+import DetailScreen from '../screens/Home/DetailScreen'
 
 // Define the stack navigator param list
 export type RootStackParamList = {
   Start: undefined;
-  AdminLogin: undefined;
+  Login: undefined;
   EmployeeLogin: undefined;
   Main: undefined;
   ProductTracking: undefined;
@@ -47,8 +46,7 @@ const AppNavigator = () => {
       ) : (
         <>
           <Stack.Screen name="Start" component={StartScreen} />
-          <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
-          <Stack.Screen name="EmployeeLogin" component={EmployeeLoginScreen} />
+          <Stack.Screen name="Login" component={AdminLoginScreen} />
         </>
       )}
     </Stack.Navigator>

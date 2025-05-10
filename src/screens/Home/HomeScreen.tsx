@@ -15,20 +15,20 @@ import {
 } from "react-native"
 
 import { Search, Plus, Filter } from "react-native-feather"
-import { useAuth } from "../context/AuthContext"
-import { useToast } from "../context/ToastContext"
-import TransferCard from "../components/cards/TransferCard"
-import ReceiveModal from "../components/modals/ReceiveModal"
-import TransferModal from "../components/modals/TransferModal"
-import ReceiveCard from "../components/cards/ReceiveCard"
+import { useAuth } from "../../context/AuthContext"
+import { useToast } from "../../context/ToastContext"
+import TransferCard from "../../components/cards/TransferCard"
+import ReceiveModal from "../../components/modals/ReceiveModal"
+import TransferModal from "../../components/modals/TransferModal"
+import ReceiveCard from "../../components/cards/ReceiveCard"
 import LinearGradient from "react-native-linear-gradient"
 import type BottomSheet from "@gorhom/bottom-sheet"
-import FilterBottomSheet from "../components/FilterBottomSheet"
-import { useAppData } from "../api/categoryData"
-import { renderEmptyList } from "../components/emptyList"
-import AddStockModal from "../components/modals/AddStockModal"
-import { axiosInstance } from "../api/axios"
-import type { Product } from "../types/apiType"
+import FilterBottomSheet from "../../components/FilterBottomSheet"
+import { useAppData } from "../../api/categoryData"
+import { renderEmptyList } from "../../components/emptyList"
+import AddStockModal from "../../components/modals/AddStockModal"
+import { axiosInstance } from "../../api/axios"
+import type { Product } from "../../types/apiType"
 
 const HomeScreen = () => {
   // user
@@ -66,7 +66,7 @@ const HomeScreen = () => {
   const GetDataSend = async () => {
     setloading(true)
     try {
-      const { data } = await axiosInstance.get(`/api/mainLineProgress/complete/${user?.department.id}`)
+      const { data } = await axiosInstance.get(`/api/mainLineProgress/complete/${user?.employee.departmentId}`)
       setOriginalTransferItems(data.data)
       console.log("Yuborilgan malumot: ", data)
     } catch (error) {
@@ -83,7 +83,7 @@ const HomeScreen = () => {
   const GetDataReceive = async () => {
     setloading(true)
     try {
-      const { data } = await axiosInstance.get(`/api/mainLineProgress/acceptance/${user?.department.id}`)
+      const { data } = await axiosInstance.get(`/api/mainLineProgress/acceptance/${user?.employee.departmentId}`)
       setOriginalReceiveItems(data.data)
       console.log("Qabul qilingan malumot: ", data)
     } catch (error) {
@@ -183,7 +183,7 @@ const HomeScreen = () => {
 
       <LinearGradient colors={["#5e72e4", "#324cdd"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.header}>
         <Text style={styles.title}>Asosiy sahifa</Text>
-        <Text style={styles.subtitle}>{user?.department.name} bo'limi</Text>
+        <Text style={styles.subtitle}>{user?.employee.name} bo'limi</Text>
       </LinearGradient>
 
       <View style={styles.searchContainer}>
@@ -308,7 +308,7 @@ const HomeScreen = () => {
           }
         />
       )}
-      {user?.department.name === "ombor" || user?.department.name === "Ombor " && (
+      {user?.employee.name === "ombor" || user?.employee.name === "Ombor " && (
         <TouchableOpacity style={styles.addButton} onPress={() => setShowAddModal(true)} activeOpacity={0.8}>
           <Plus width={24} height={24} color="white" />
         </TouchableOpacity>
